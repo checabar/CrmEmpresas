@@ -14,11 +14,64 @@
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 
     <link rel="stylesheet" href="assets/css/styles_premium.css">
+    <link rel="stylesheet" href="assets/css/login.css">
+    <style>
+        /* Seguridad Crítica: Ocultar todo si no hay sesión */
+        body.not-logged-in #mainContent,
+        body.not-logged-in .header,
+        body.not-logged-in .welcome-screen {
+            display: none !important;
+        }
+
+        /* Asegurar que el overlay se vea aunque falle el CSS externo */
+        .login-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: #0f172a;
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        body.not-logged-in .login-overlay {
+            display: flex !important;
+        }
+    </style>
 </head>
 
-<body>
+<body class="not-logged-in">
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-header" style="background: url('assets/img/checa_imagen.jpg') center/cover no-repeat;">
+                <div class="login-header-overlay"></div>
+                <div class="login-header-content">
+                    <img src="assets/img/favicon.svg" alt="Checa Logo" class="login-logo">
+                    <h2>Acceso CRM</h2>
+                </div>
+            </div>
+            <div class="login-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUser">Usuario</label>
+                        <input type="text" id="loginUser" required placeholder="Ingresá tu usuario">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPass">Contraseña</label>
+                        <input type="password" id="loginPass" required placeholder="Ingresá tu contraseña">
+                    </div>
+                    <div id="loginError" class="login-error" style="display:none;">Usuario o contraseña incorrectos
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Barra Superior -->
-    <header class="header" style="background: url('assets/img/checa_imagen.jpg') center/cover no-repeat; position:relative;">
+    <header class="header"
+        style="background: url('assets/img/checa_imagen.jpg') center/cover no-repeat; position:relative;">
         <div style="position:absolute; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(2px);"></div>
         <div class="header-content" style="position:relative; z-index:1;">
             <div class="header-left">
@@ -41,13 +94,13 @@
                 <button id="btnImportDB" class="btn btn-secondary" title="Cargar otra base de datos">
                     📂 Recargar Base
                 </button>
-                
+
                 <button id="btnSaveDB" class="btn btn-success" title="Guardar cambios sobre el archivo actual">
                     💾 Guardar Base
                 </button>
 
                 <button id="btnAddDistributor" class="btn btn-primary"
-                        title="Crear un nuevo distribuidor en el sistema">➕ Agregar</button>
+                    title="Crear un nuevo distribuidor en el sistema">➕ Agregar</button>
             </div>
         </div>
     </header>
@@ -84,26 +137,25 @@
             <!-- Filtros de Dashboard -->
             <div class="dashboard-filters">
                 <h3>📊 Filtrar Visualizaciones:</h3>
-                <select id="dashFilterCategoria" class="dash-filter" 
-                        title="Filtrar gráficos por tipo de negocio del distribuidor">
+                <select id="dashFilterCategoria" class="dash-filter"
+                    title="Filtrar gráficos por tipo de negocio del distribuidor">
                     <option value="">Todas las categorías</option>
                 </select>
-                <select id="dashFilterResponsable" class="dash-filter" 
-                        title="Filtrar gráficos por vendedor responsable">
+                <select id="dashFilterResponsable" class="dash-filter"
+                    title="Filtrar gráficos por vendedor responsable">
                     <option value="">Todos los responsables</option>
                 </select>
-                <select id="dashFilterEstado" class="dash-filter" 
-                        title="Filtrar gráficos por estado de contacto">
+                <select id="dashFilterEstado" class="dash-filter" title="Filtrar gráficos por estado de contacto">
                     <option value="">Todos los estados</option>
                     <option value="pendiente">Solo Pendientes</option>
                     <option value="contactado">Solo Contactados</option>
                 </select>
-                <select id="dashFilterProvincia" class="dash-filter" 
-                        title="Filtrar gráficos por provincia de Argentina">
+                <select id="dashFilterProvincia" class="dash-filter"
+                    title="Filtrar gráficos por provincia de Argentina">
                     <option value="">Todas las provincias</option>
                 </select>
-                <button id="btnClearDashFilters" class="btn btn-secondary-small" 
-                        title="Limpiar todos los filtros del dashboard">🔄 Limpiar</button>
+                <button id="btnClearDashFilters" class="btn btn-secondary-small"
+                    title="Limpiar todos los filtros del dashboard">🔄 Limpiar</button>
             </div>
 
             <!-- Embudo Principal -->
@@ -156,8 +208,8 @@
 
         <!-- Filtros -->
         <section class="filters">
-            <input type="text" id="filterNombre" placeholder="🔍 Buscar por nombre..." 
-                   title="Buscar distribuidores por nombre, ciudad, contacto o cualquier dato">
+            <input type="text" id="filterNombre" placeholder="🔍 Buscar por nombre..."
+                title="Buscar distribuidores por nombre, ciudad, contacto o cualquier dato">
             <select id="filterProvincia" title="Filtrar distribuidores por provincia">
                 <option value="">Todas las provincias</option>
             </select>
@@ -172,8 +224,8 @@
             <select id="filterResponsable" title="Filtrar por vendedor asignado">
                 <option value="">Todos los responsables</option>
             </select>
-            <button id="btnClearFilters" class="btn btn-secondary-small" 
-                    title="Limpiar todos los filtros de la tabla">Limpiar filtros</button>
+            <button id="btnClearFilters" class="btn btn-secondary-small"
+                title="Limpiar todos los filtros de la tabla">Limpiar filtros</button>
         </section>
 
         <!-- Tabla -->
@@ -205,15 +257,14 @@
         <div class="drawer">
             <div class="drawer-header">
                 <h2 id="drawerTitle">Distribuidor</h2>
-                <button id="btnCloseDrawer" class="btn-close" 
-                        title="Cerrar sin guardar cambios">✕</button>
+                <button id="btnCloseDrawer" class="btn-close" title="Cerrar sin guardar cambios">✕</button>
             </div>
 
             <div class="drawer-tabs">
-                <button class="tab-btn active" data-tab="info" 
-                        title="Información básica y comercial del distribuidor">📋 Información</button>
-                <button class="tab-btn" data-tab="asistente" 
-                        title="Análisis de mercado e inteligencia comercial con IA">🤖 Asistente</button>
+                <button class="tab-btn active" data-tab="info"
+                    title="Información básica y comercial del distribuidor">📋 Información</button>
+                <button class="tab-btn" data-tab="asistente"
+                    title="Análisis de mercado e inteligencia comercial con IA">🤖 Asistente</button>
             </div>
 
             <div class="drawer-content">
@@ -291,8 +342,8 @@
                         <textarea id="drawerNotas" rows="6"></textarea>
                     </div>
 
-                    <button id="btnSaveDrawer" class="btn btn-primary btn-block" 
-                            title="Guardar cambios en el distribuidor">💾 Guardar</button>
+                    <button id="btnSaveDrawer" class="btn btn-primary btn-block"
+                        title="Guardar cambios en el distribuidor">💾 Guardar</button>
                 </div>
 
                 <!-- TAB: Asistente -->
@@ -302,13 +353,16 @@
                         <p style="color:#64748b; font-size:0.9rem; margin-bottom:0.8rem;">
                             Busca info pública en Google (web, redes, reseñas) y genera un diagnóstico profundo con IA.
                         </p>
-                        <div id="researchBadge" style="font-size:0.8rem; margin-bottom:0.8rem; color:#94a3b8;">⚪ Sin búsqueda web</div>
-                        <button id="btnAnalyzarMercado" class="btn btn-primary" style="width:100%; margin-bottom:0.5rem;" 
-                                title="Buscar info pública + generar análisis profundo con IA">
+                        <div id="researchBadge" style="font-size:0.8rem; margin-bottom:0.8rem; color:#94a3b8;">⚪ Sin
+                            búsqueda web</div>
+                        <button id="btnAnalyzarMercado" class="btn btn-primary"
+                            style="width:100%; margin-bottom:0.5rem;"
+                            title="Buscar info pública + generar análisis profundo con IA">
                             🔍 Generar Análisis Profundo
                         </button>
-                        <button id="btnRefreshResearch" class="btn btn-secondary-small" style="width:100%; margin-bottom:1rem;" 
-                                title="Solo actualizar la búsqueda web sin regenerar el análisis">
+                        <button id="btnRefreshResearch" class="btn btn-secondary-small"
+                            style="width:100%; margin-bottom:1rem;"
+                            title="Solo actualizar la búsqueda web sin regenerar el análisis">
                             🌐 Actualizar Búsqueda Web
                         </button>
                         <div id="loadingAnalisis" style="display:none; text-align:center; padding:2rem; color:#667eea;">
@@ -324,11 +378,12 @@
                             Genera estrategia basada en el análisis y el estado actual del distribuidor.
                         </p>
                         <button id="btnGenerarEstrategia" class="btn btn-success"
-                            style="width:100%; margin-bottom:1rem;" 
+                            style="width:100%; margin-bottom:1rem;"
                             title="Generar recomendaciones comerciales personalizadas">
                             🎯 Generar Estrategia
                         </button>
-                        <div id="loadingEstrategia" style="display:none; text-align:center; padding:2rem; color:#10b981;">
+                        <div id="loadingEstrategia"
+                            style="display:none; text-align:center; padding:2rem; color:#10b981;">
                             <div style="font-size:2rem; animation: spin 1s linear infinite;">⏳</div>
                             <p style="margin-top:1rem;">Generando estrategia...</p>
                         </div>
@@ -337,7 +392,7 @@
                             <label>Contenido Generado</label>
                             <textarea id="outputAsistente" rows="12" readonly></textarea>
                             <button id="btnCopyOutput" class="btn btn-secondary-small"
-                                style="margin-top:0.5rem; width:100%;" 
+                                style="margin-top:0.5rem; width:100%;"
                                 title="Copiar contenido generado al portapapeles">📋 Copiar</button>
                         </div>
                     </div>
@@ -363,8 +418,8 @@
                                 <option value="cierre">Cierre</option>
                             </select>
                             <textarea id="logNotas" rows="3" placeholder="Notas del evento..."></textarea>
-                            <button id="btnAddLog" class="btn btn-primary" 
-                                    title="Registrar nueva interacción con el distribuidor">➕ Agregar al Log</button>
+                            <button id="btnAddLog" class="btn btn-primary"
+                                title="Registrar nueva interacción con el distribuidor">➕ Agregar al Log</button>
                         </div>
                     </div>
                 </div>
@@ -384,9 +439,8 @@
                 <form id="addDistributorForm">
                     <div class="form-group">
                         <label>Nombre *</label>
-                        <input type="text" id="newNombre" required 
-                               placeholder="Ej: Distribuidora Los Andes" 
-                               title="Nombre comercial del distribuidor">
+                        <input type="text" id="newNombre" required placeholder="Ej: Distribuidora Los Andes"
+                            title="Nombre comercial del distribuidor">
                     </div>
 
                     <div class="form-group">
@@ -422,9 +476,8 @@
 
                     <div class="form-group">
                         <label>Ciudad *</label>
-                        <input type="text" id="newCiudad" required 
-                               placeholder="Ej: Córdoba Capital" 
-                               title="Ciudad donde opera el distribuidor">
+                        <input type="text" id="newCiudad" required placeholder="Ej: Córdoba Capital"
+                            title="Ciudad donde opera el distribuidor">
                     </div>
 
                     <div class="form-group">
@@ -441,19 +494,18 @@
 
                     <div class="form-group">
                         <label>Link Google Maps</label>
-                        <input type="url" id="newLinkGoogle" 
-                               placeholder="https://maps.google.com/..." 
-                               title="Link de Google Maps del local (opcional)">
+                        <input type="url" id="newLinkGoogle" placeholder="https://maps.google.com/..."
+                            title="Link de Google Maps del local (opcional)">
                         <small style="display:block; margin-top:0.5rem; color:#64748b;">
                             Opcional: Pegá el link de Google Maps del local
                         </small>
                     </div>
 
                     <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button type="button" id="btnCancelAdd" class="btn btn-secondary" style="flex: 1;" 
-                                title="Cancelar y cerrar">Cancelar</button>
-                        <button type="submit" id="btnSaveNew" class="btn btn-primary" style="flex: 2;" 
-                                title="Guardar nuevo distribuidor">💾 Guardar Distribuidor</button>
+                        <button type="button" id="btnCancelAdd" class="btn btn-secondary" style="flex: 1;"
+                            title="Cancelar y cerrar">Cancelar</button>
+                        <button type="submit" id="btnSaveNew" class="btn btn-primary" style="flex: 2;"
+                            title="Guardar nuevo distribuidor">💾 Guardar Distribuidor</button>
                     </div>
                 </form>
             </div>
@@ -469,6 +521,7 @@
     <script src="assets/js/app_secure.js"></script>
     <script src="assets/js/analisis_mercado.js"></script>
     <script src="assets/js/add_distributor.js"></script>
+    <script src="assets/js/auth.js"></script>
 </body>
 
 </html>
