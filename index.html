@@ -545,27 +545,13 @@
     <input type="file" id="fileInputFallback" accept=".json" style="display:none;">
 
     <script src="assets/js/logger.js"></script>
-    <script src="assets/js/api_manager.js?v=10"></script>
+    <script src="assets/js/api_manager.js?v=100"></script>
     <script src="assets/js/echarts_premium.js"></script>
     <script src="assets/js/app_secure.js"></script>
     <script src="assets/js/analisis_mercado.js"></script>
     <script src="assets/js/add_distributor.js"></script>
-    <script src="assets/js/api_settings.js?v=10"></script>
-    <script src="assets/js/auth.js?v=20"></script>
-
-    <script>
-        console.log("🚀 CRM DEBUG: index.html cargado.");
-        document.addEventListener("DOMContentLoaded", function () {
-            const btn = document.getElementById("btnSettings");
-            console.log("🚀 CRM DEBUG: Buscando botón...", btn);
-            if (btn) {
-                console.log("🚀 CRM DEBUG: Botón ENCONTRADO. Forzando visibilidad.");
-                btn.style.display = "flex";
-            } else {
-                console.error("🚀 CRM DEBUG: Botón NO ENCONTRADO en el DOM.");
-            }
-        });
-    </script>
+    <script src="assets/js/api_settings.js?v=100"></script>
+    <script src="assets/js/auth.js?v=100"></script>
 
     <!-- Botón Flotante de Configuración - Siempre visible -->
     <button id="btnSettings" class="btn-settings-floating" title="Configuración de API Keys">⚙️</button>
