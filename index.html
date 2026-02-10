@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Distribuidores - Checa</title>
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+
+    <!-- CDN: SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- CDN: Apache ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+    <link rel="stylesheet" href="assets/css/styles_premium.css">
+</head>
+
+<body>
+    <!-- Barra Superior -->
+    <header class="header" style="background: url('assets/img/checa_imagen.jpg') center/cover no-repeat; position:relative;">
+        <div style="position:absolute; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(2px);"></div>
+        <div class="header-content" style="position:relative; z-index:1;">
+            <div class="header-left">
+                <div class="logo-container">
+                    <div>
+                        <h1>CRM Distribuidores - Checa</h1>
+                        <div id="lastUpdate" class="last-update">Última actualización: -</div>
+                        <div id="apiStatus" class="api-status">📝 Modo Offline</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controles del header: solo visibles cuando hay base cargada -->
+            <div id="headerActions" class="header-actions" style="display:none;">
+                <div id="statusIndicator" class="fs-indicator">
+                    <span id="statusDot" class="status-dot connected"></span>
+                    <span id="statusText">Base cargada</span>
+                </div>
+
+                <button id="btnImportDB" class="btn btn-secondary" title="Cargar otra base de datos">
+                    📂 Recargar Base
+                </button>
+                
+                <button id="btnSaveDB" class="btn btn-success" title="Guardar cambios sobre el archivo actual">
+                    💾 Guardar Base
+                </button>
+
+                <button id="btnAddDistributor" class="btn btn-primary"
+                        title="Crear un nuevo distribuidor en el sistema">➕ Agregar</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Pantalla de bienvenida (cuando no hay base cargada) -->
+    <div id="welcomeScreen" class="welcome-screen">
+        <button id="btnWelcomeLoad" class="btn btn-primary welcome-btn">📂 Cargar Base de Datos</button>
+    </div>
+
+    <!-- Contenido principal (oculto hasta cargar base) -->
+    <div id="mainContent" style="display:none;">
+
+        <!-- Dashboard KPIs -->
+        <section class="dashboard">
+            <div class="kpi-container">
+                <div class="kpi-card" title="Cantidad total de distribuidores registrados en el sistema">
+                    <div class="kpi-value" id="kpiTotal">0</div>
+                    <div class="kpi-label">Total Distribuidores</div>
+                </div>
+                <div class="kpi-card kpi-success" title="Distribuidores que ya fueron contactados">
+                    <div class="kpi-value" id="kpiContactados">0</div>
+                    <div class="kpi-label">Contactados</div>
+                </div>
+                <div class="kpi-card kpi-warning" title="Distribuidores pendientes de contactar">
+                    <div class="kpi-value" id="kpiPendientes">0</div>
+                    <div class="kpi-label">Pendientes</div>
+                </div>
+                <div class="kpi-card kpi-info" title="Distribuidores en proceso de negociación comercial">
+                    <div class="kpi-value" id="kpiNegociacion">0</div>
+                    <div class="kpi-label">En Negociación</div>
+                </div>
+            </div>
+
+            <!-- Filtros de Dashboard -->
+            <div class="dashboard-filters">
+                <h3>📊 Filtrar Visualizaciones:</h3>
+                <select id="dashFilterCategoria" class="dash-filter" 
+                        title="Filtrar gráficos por tipo de negocio del distribuidor">
+                    <option value="">Todas las categorías</option>
+                </select>
+                <select id="dashFilterResponsable" class="dash-filter" 
+                        title="Filtrar gráficos por vendedor responsable">
+                    <option value="">Todos los responsables</option>
+                </select>
+                <select id="dashFilterEstado" class="dash-filter" 
+                        title="Filtrar gráficos por estado de contacto">
+                    <option value="">Todos los estados</option>
+                    <option value="pendiente">Solo Pendientes</option>
+                    <option value="contactado">Solo Contactados</option>
+                </select>
+                <select id="dashFilterProvincia" class="dash-filter" 
+                        title="Filtrar gráficos por provincia de Argentina">
+                    <option value="">Todas las provincias</option>
+                </select>
+                <button id="btnClearDashFilters" class="btn btn-secondary-small" 
+                        title="Limpiar todos los filtros del dashboard">🔄 Limpiar</button>
+            </div>
+
+            <!-- Embudo Principal -->
+            <div class="embudo-principal" title="Distribución de distribuidores por etapa del proceso comercial">
+                <h3>🎯 Embudo de Ventas - Pipeline Comercial</h3>
+                <div id="chartEmbudo" style="width: 100%; height: 300px;"></div>
+                <div class="funnel-stats">
+                    <div class="funnel-stat">
+                        <span class="stat-label">Tasa de Conversión</span>
+                        <span class="stat-value" id="conversionRate">0%</span>
+                    </div>
+                    <div class="funnel-stat">
+                        <span class="stat-label">En Pipeline Activo</span>
+                        <span class="stat-value" id="enPipeline">0</span>
+                    </div>
+                    <div class="funnel-stat">
+                        <span class="stat-label">Valor Pipeline</span>
+                        <span class="stat-value" id="valorPipeline">-</span>
+                    </div>
+                    <div class="funnel-stat">
+                        <span class="stat-label">Promedio Puntaje</span>
+                        <span class="stat-value" id="promedioPuntaje">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de Gráficos 2x2 -->
+            <div class="charts-grid">
+                <div class="chart-box" title="Distribución geográfica de distribuidores por provincia">
+                    <h3>📍 Por Provincia</h3>
+                    <div id="chartProvincias" style="width: 100%; height: 300px;"></div>
+                </div>
+
+                <div class="chart-box" title="Tipos de negocios que distribuyen productos Checa">
+                    <h3>🏷️ Por Categoría</h3>
+                    <div id="chartCategorias" style="width: 100%; height: 300px;"></div>
+                </div>
+
+                <div class="chart-box" title="Distribución de cartera comercial por vendedor responsable">
+                    <h3>👥 Asignados por Responsable</h3>
+                    <div id="chartResponsables" style="width: 100%; height: 300px;"></div>
+                </div>
+
+                <div class="chart-box" title="Calendario de próximos contactos programados con distribuidores">
+                    <h3>📅 Próximos Contactos</h3>
+                    <div id="chartPuntajes" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filtros -->
+        <section class="filters">
+            <input type="text" id="filterNombre" placeholder="🔍 Buscar por nombre..." 
+                   title="Buscar distribuidores por nombre, ciudad, contacto o cualquier dato">
+            <select id="filterProvincia" title="Filtrar distribuidores por provincia">
+                <option value="">Todas las provincias</option>
+            </select>
+            <select id="filterCategoria" title="Filtrar por tipo de negocio">
+                <option value="">Todas las categorías</option>
+            </select>
+            <select id="filterEstado" title="Filtrar por estado de contacto">
+                <option value="">Todos los estados</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="contactado">Contactado</option>
+            </select>
+            <select id="filterResponsable" title="Filtrar por vendedor asignado">
+                <option value="">Todos los responsables</option>
+            </select>
+            <button id="btnClearFilters" class="btn btn-secondary-small" 
+                    title="Limpiar todos los filtros de la tabla">Limpiar filtros</button>
+        </section>
+
+        <!-- Tabla -->
+        <section class="table-container">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Provincia</th>
+                        <th>Ciudad</th>
+                        <th>Puntaje</th>
+                        <th>Categoría</th>
+                        <th>Estado</th>
+                        <th>Responsable</th>
+                        <th>Etapa</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Datos dinámicos -->
+                </tbody>
+            </table>
+        </section>
+
+    </div><!-- /mainContent -->
+
+    <!-- Modal/Drawer -->
+    <div id="drawerOverlay" class="drawer-overlay" style="display:none">
+        <div class="drawer">
+            <div class="drawer-header">
+                <h2 id="drawerTitle">Distribuidor</h2>
+                <button id="btnCloseDrawer" class="btn-close" 
+                        title="Cerrar sin guardar cambios">✕</button>
+            </div>
+
+            <div class="drawer-tabs">
+                <button class="tab-btn active" data-tab="info" 
+                        title="Información básica y comercial del distribuidor">📋 Información</button>
+                <button class="tab-btn" data-tab="asistente" 
+                        title="Análisis de mercado e inteligencia comercial con IA">🤖 Asistente</button>
+            </div>
+
+            <div class="drawer-content">
+                <!-- TAB: Información -->
+                <div id="tabInfo" class="tab-content active">
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="drawerEstado">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="contactado">Contactado</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Etapa Pipeline</label>
+                        <select id="drawerEtapa">
+                            <option value="nuevo">Nuevo</option>
+                            <option value="primer_contacto">Primer Contacto</option>
+                            <option value="seguimiento">Seguimiento</option>
+                            <option value="negociacion">Negociación</option>
+                            <option value="cerrado_ganado">Cerrado Ganado</option>
+                            <option value="cerrado_perdido">Cerrado Perdido</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Probabilidad (%)</label>
+                        <input type="number" id="drawerProbabilidad" min="0" max="100" placeholder="0-100">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Responsable Comercial</label>
+                        <select id="drawerResponsable">
+                            <option value="">Sin asignar</option>
+                            <option value="Juan Cruz">Juan Cruz</option>
+                            <option value="Franco">Franco</option>
+                            <option value="Pablo">Pablo</option>
+                            <option value="Santiago">Santiago</option>
+                            <option value="Mai">Mai</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nombre Contacto</label>
+                        <input type="text" id="drawerNombreContacto">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono Contacto</label>
+                        <input type="tel" id="drawerTelefono">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email Contacto</label>
+                        <input type="email" id="drawerEmail">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fecha Último Contacto</label>
+                        <input type="date" id="drawerFechaContacto">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Próxima Acción</label>
+                        <input type="text" id="drawerProximaAccion">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fecha Próxima Acción</label>
+                        <input type="date" id="drawerFechaProximaAccion">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notas Comerciales</label>
+                        <textarea id="drawerNotas" rows="6"></textarea>
+                    </div>
+
+                    <button id="btnSaveDrawer" class="btn btn-primary btn-block" 
+                            title="Guardar cambios en el distribuidor">💾 Guardar</button>
+                </div>
+
+                <!-- TAB: Asistente -->
+                <div id="tabAsistente" class="tab-content">
+                    <div class="asistente-section">
+                        <h3>🔬 Análisis de Mercado</h3>
+                        <p style="color:#64748b; font-size:0.9rem; margin-bottom:0.8rem;">
+                            Busca info pública en Google (web, redes, reseñas) y genera un diagnóstico profundo con IA.
+                        </p>
+                        <div id="researchBadge" style="font-size:0.8rem; margin-bottom:0.8rem; color:#94a3b8;">⚪ Sin búsqueda web</div>
+                        <button id="btnAnalyzarMercado" class="btn btn-primary" style="width:100%; margin-bottom:0.5rem;" 
+                                title="Buscar info pública + generar análisis profundo con IA">
+                            🔍 Generar Análisis Profundo
+                        </button>
+                        <button id="btnRefreshResearch" class="btn btn-secondary-small" style="width:100%; margin-bottom:1rem;" 
+                                title="Solo actualizar la búsqueda web sin regenerar el análisis">
+                            🌐 Actualizar Búsqueda Web
+                        </button>
+                        <div id="loadingAnalisis" style="display:none; text-align:center; padding:2rem; color:#667eea;">
+                            <div style="font-size:2rem; animation: spin 1s linear infinite;">⏳</div>
+                            <p id="loadingAnalisisMsg" style="margin-top:1rem;">Analizando distribuidor...</p>
+                        </div>
+                        <div id="resultadosAnalisis" class="analisis-resultados" style="display:none;"></div>
+                    </div>
+
+                    <div class="asistente-section">
+                        <h3>🎯 Estrategia Comercial</h3>
+                        <p style="color:#64748b; font-size:0.9rem; margin-bottom:1rem;">
+                            Genera estrategia basada en el análisis y el estado actual del distribuidor.
+                        </p>
+                        <button id="btnGenerarEstrategia" class="btn btn-success"
+                            style="width:100%; margin-bottom:1rem;" 
+                            title="Generar recomendaciones comerciales personalizadas">
+                            🎯 Generar Estrategia
+                        </button>
+                        <div id="loadingEstrategia" style="display:none; text-align:center; padding:2rem; color:#10b981;">
+                            <div style="font-size:2rem; animation: spin 1s linear infinite;">⏳</div>
+                            <p style="margin-top:1rem;">Generando estrategia...</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Contenido Generado</label>
+                            <textarea id="outputAsistente" rows="12" readonly></textarea>
+                            <button id="btnCopyOutput" class="btn btn-secondary-small"
+                                style="margin-top:0.5rem; width:100%;" 
+                                title="Copiar contenido generado al portapapeles">📋 Copiar</button>
+                        </div>
+                    </div>
+
+                    <div class="asistente-section">
+                        <h3>Log de Interacciones</h3>
+                        <div id="logContainer" class="log-container"></div>
+
+                        <div class="log-form">
+                            <h4>Agregar Evento</h4>
+                            <select id="logTipo">
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="email">Email</option>
+                                <option value="llamada">Llamada</option>
+                                <option value="visita">Visita</option>
+                            </select>
+                            <select id="logResultado">
+                                <option value="sin_respuesta">Sin respuesta</option>
+                                <option value="interesado">Interesado</option>
+                                <option value="pide_precio">Pide precio</option>
+                                <option value="no_interesa">No le interesa</option>
+                                <option value="seguir_contacto">Seguir contacto</option>
+                                <option value="cierre">Cierre</option>
+                            </select>
+                            <textarea id="logNotas" rows="3" placeholder="Notas del evento..."></textarea>
+                            <button id="btnAddLog" class="btn btn-primary" 
+                                    title="Registrar nueva interacción con el distribuidor">➕ Agregar al Log</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar Nuevo Distribuidor -->
+    <div id="addDistributorModal" class="drawer-overlay" style="display:none">
+        <div class="drawer" style="max-width: 600px;">
+            <div class="drawer-header">
+                <h2>➕ Agregar Nuevo Distribuidor</h2>
+                <button id="btnCloseAddModal" class="btn-close" title="Cerrar sin guardar">✕</button>
+            </div>
+
+            <div class="drawer-content">
+                <form id="addDistributorForm">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" id="newNombre" required 
+                               placeholder="Ej: Distribuidora Los Andes" 
+                               title="Nombre comercial del distribuidor">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Provincia *</label>
+                        <select id="newProvincia" required title="Seleccionar provincia de Argentina">
+                            <option value="">-- Seleccionar Provincia --</option>
+                            <option value="Buenos Aires">Buenos Aires</option>
+                            <option value="Ciudad Autónoma de Buenos Aires">CABA</option>
+                            <option value="Catamarca">Catamarca</option>
+                            <option value="Chaco">Chaco</option>
+                            <option value="Chubut">Chubut</option>
+                            <option value="Córdoba">Córdoba</option>
+                            <option value="Corrientes">Corrientes</option>
+                            <option value="Entre Ríos">Entre Ríos</option>
+                            <option value="Formosa">Formosa</option>
+                            <option value="Jujuy">Jujuy</option>
+                            <option value="La Pampa">La Pampa</option>
+                            <option value="La Rioja">La Rioja</option>
+                            <option value="Mendoza">Mendoza</option>
+                            <option value="Misiones">Misiones</option>
+                            <option value="Neuquén">Neuquén</option>
+                            <option value="Río Negro">Río Negro</option>
+                            <option value="Salta">Salta</option>
+                            <option value="San Juan">San Juan</option>
+                            <option value="San Luis">San Luis</option>
+                            <option value="Santa Cruz">Santa Cruz</option>
+                            <option value="Santa Fe">Santa Fe</option>
+                            <option value="Santiago del Estero">Santiago del Estero</option>
+                            <option value="Tierra del Fuego">Tierra del Fuego</option>
+                            <option value="Tucumán">Tucumán</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ciudad *</label>
+                        <input type="text" id="newCiudad" required 
+                               placeholder="Ej: Córdoba Capital" 
+                               title="Ciudad donde opera el distribuidor">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Categoría *</label>
+                        <select id="newCategoria" required title="Tipo de negocio del distribuidor">
+                            <option value="">-- Seleccionar Categoría --</option>
+                            <option value="Distribuidor">Distribuidor</option>
+                            <option value="Mayorista">Mayorista</option>
+                            <option value="Bar">Bar</option>
+                            <option value="Tienda de bebidas">Tienda de bebidas</option>
+                            <option value="Tienda de cerveza">Tienda de cerveza</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Link Google Maps</label>
+                        <input type="url" id="newLinkGoogle" 
+                               placeholder="https://maps.google.com/..." 
+                               title="Link de Google Maps del local (opcional)">
+                        <small style="display:block; margin-top:0.5rem; color:#64748b;">
+                            Opcional: Pegá el link de Google Maps del local
+                        </small>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="button" id="btnCancelAdd" class="btn btn-secondary" style="flex: 1;" 
+                                title="Cancelar y cerrar">Cancelar</button>
+                        <button type="submit" id="btnSaveNew" class="btn btn-primary" style="flex: 2;" 
+                                title="Guardar nuevo distribuidor">💾 Guardar Distribuidor</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Input oculto para fallback -->
+    <input type="file" id="fileInputFallback" accept=".json" style="display:none;">
+
+    <script src="assets/js/logger.js"></script>
+    <script src="assets/js/api_config.js"></script>
+    <script src="assets/js/echarts_premium.js"></script>
+    <script src="assets/js/app_secure.js"></script>
+    <script src="assets/js/analisis_mercado.js"></script>
+    <script src="assets/js/add_distributor.js"></script>
+</body>
+
+</html>

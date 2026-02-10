@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "updated_at": "2024-01-01T00:00:00.000Z",
+    "updated_by": "Sistema",
+    "schema": "CHECA_CRM_DB_V1"
+  },
+  "items": [
+    {
+      "id": "dist_ejemplo123",
+      "nombre": "Distribuidora de Ejemplo",
+      "provincia": "Buenos Aires",
+      "ciudad": "CABA",
+      "categoria": "Distribuidor",
+      "puntaje": 85,
+      "estado": "pendiente",
+      "etapa_pipeline": "nuevo",
+      "responsable_comercial": "Juan Cruz",
+      "nombre_contacto": "Juan Perez",
+      "telefono_contacto": "+54 11 1234 5678",
+      "email_contacto": "contacto@ejemplo.com",
+      "link_google": "https://maps.google.com",
+      "historial_contactos": []
+    }
+  ]
+}

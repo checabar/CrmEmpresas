@@ -1,0 +1,1 @@
+Pon aquí tu OpenAI API Key (debe empezar con sk-...) y guarda este archivo como openai_key.txt

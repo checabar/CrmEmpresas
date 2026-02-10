@@ -1,0 +1,1 @@
+Pon aquí tu Serper API Key y guarda este archivo como serper_key.txt
