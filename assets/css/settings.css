@@ -1,0 +1,42 @@
+/* Botón Flotante de Configuración - Siempre visible y accesible */
+.btn-settings-floating {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    background: #4f46e5;
+    color: white;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    z-index: 10001;
+    /* Por encima de todo, incluso del login */
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-settings-floating:hover {
+    transform: scale(1.1) rotate(45deg);
+    background: #3730a3;
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.6);
+}
+
+.btn-settings-floating:active {
+    transform: scale(0.9);
+}
+
+/* Ajustes para móviles: Más grande para que sea fácil de tocar */
+@media (max-width: 768px) {
+    .btn-settings-floating {
+        width: 65px;
+        height: 65px;
+        bottom: 20px;
+        right: 20px;
+        font-size: 2rem;
+    }
+}

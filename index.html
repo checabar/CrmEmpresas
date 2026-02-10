@@ -15,6 +15,7 @@
 
     <link rel="stylesheet" href="assets/css/styles_premium.css">
     <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="assets/css/settings.css?v=10">
     <style>
         /* Seguridad Crítica: Ocultar todo si no hay sesión */
         body.not-logged-in #mainContent,
@@ -104,6 +105,34 @@
             </div>
         </div>
     </header>
+
+    <!-- Modal: Configuración de API Keys -->
+    <div id="settingsModal" class="drawer-overlay" style="display:none">
+        <div class="drawer" style="max-width: 500px;">
+            <div class="drawer-header">
+                <h2>⚙️ Configuración de IA</h2>
+                <button id="btnCloseSettings" class="btn-close">✕</button>
+            </div>
+            <div class="drawer-content">
+                <p style="margin-bottom: 1.5rem; font-size: 0.9rem; color: #64748b;">
+                    Ingresá tus claves para activar la IA en este dispositivo. Se guardarán solo en este navegador.
+                </p>
+                <div class="form-group">
+                    <label>OpenAI API Key</label>
+                    <input type="password" id="inputOpenAI" placeholder="sk-...">
+                </div>
+                <div class="form-group">
+                    <label>Serper API Key</label>
+                    <input type="password" id="inputSerper" placeholder="Clave de Serper...">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button id="btnSaveSettings" class="btn btn-primary btn-block">💾 Guardar Configuración</button>
+                </div>
+                <button id="btnClearSettings" class="btn btn-link"
+                    style="margin-top:1rem; color:#ef4444; width:100%;">Eliminar Keys de este equipo</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Pantalla de bienvenida (cuando no hay base cargada) -->
     <div id="welcomeScreen" class="welcome-screen">
@@ -516,12 +545,30 @@
     <input type="file" id="fileInputFallback" accept=".json" style="display:none;">
 
     <script src="assets/js/logger.js"></script>
-    <script src="assets/js/api_config.js"></script>
+    <script src="assets/js/api_manager.js?v=10"></script>
     <script src="assets/js/echarts_premium.js"></script>
     <script src="assets/js/app_secure.js"></script>
     <script src="assets/js/analisis_mercado.js"></script>
     <script src="assets/js/add_distributor.js"></script>
-    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/api_settings.js?v=10"></script>
+    <script src="assets/js/auth.js?v=20"></script>
+
+    <script>
+        console.log("🚀 CRM DEBUG: index.html cargado.");
+        document.addEventListener("DOMContentLoaded", function () {
+            const btn = document.getElementById("btnSettings");
+            console.log("🚀 CRM DEBUG: Buscando botón...", btn);
+            if (btn) {
+                console.log("🚀 CRM DEBUG: Botón ENCONTRADO. Forzando visibilidad.");
+                btn.style.display = "flex";
+            } else {
+                console.error("🚀 CRM DEBUG: Botón NO ENCONTRADO en el DOM.");
+            }
+        });
+    </script>
+
+    <!-- Botón Flotante de Configuración - Siempre visible -->
+    <button id="btnSettings" class="btn-settings-floating" title="Configuración de API Keys">⚙️</button>
 </body>
 
 </html>

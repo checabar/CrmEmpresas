@@ -1,5 +1,5 @@
 // =============================================
-// CONFIGURACION DE API KEYS - CRM Distribuidores Checa
+// API SETTINGS MANAGER - CRM Distribuidores Checa
 // =============================================
 
 var OPENAI_API_KEY = "";
