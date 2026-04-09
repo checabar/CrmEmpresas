@@ -261,13 +261,13 @@ Si no encontrás nada útil, decilo claramente.`,
         if (!response.ok) {
             const errText = await response.text().catch(() => '');
             console.warn(`⚠️ OpenAI Responses API error (${response.status}): ${errText.substring(0, 200)}`);
-            
+
             // Si la Responses API no está disponible, intentar con Chat Completions + instrucción de búsqueda
             return await buscarConOpenAIChatFallback(dist, openaiKey);
         }
 
         const data = await response.json();
-        
+
         // Extraer el texto de la respuesta y las URLs citadas
         let textoCompleto = '';
         let urlsCitadas = [];
@@ -568,7 +568,7 @@ async function analizarDistribuidorProfundo() {
         // PASO 1: Buscar información pública
         updateLoadingMsg('Buscando información pública en internet...');
         let research = await buscarInfoDistribuidor(dist);
-        
+
         if (research) {
             dist.research = research;
             markAsDirty();
@@ -582,7 +582,7 @@ async function analizarDistribuidorProfundo() {
         updateLoadingMsg('Generando diagnóstico con IA (puede tardar ~30s)...');
         const markdown = await generarAnalisisConResearch(dist, research);
 
-        // PASO 3: Guardar en el distribuidor
+        // PASO 3: Guardar en el distribuidor y en Firestore
         dist.analisis = {
             generated_at: new Date().toISOString(),
             had_research: !!(research && research.result_count > 0),
@@ -590,7 +590,11 @@ async function analizarDistribuidorProfundo() {
             search_method: research ? (research.results[0]?.source || 'unknown') : 'none',
             markdown: markdown
         };
-        markAsDirty();
+
+        const updateData = { analisis: dist.analisis };
+        if (research) updateData.research = research;
+
+        await db.collection('distribuidores').doc(dist.id).update(updateData);
 
         // PASO 4: Mostrar
         mostrarAnalisisMarkdown(dist, false);
@@ -632,10 +636,10 @@ async function actualizarResearch() {
     try {
         updateLoadingMsg('Actualizando búsqueda web...');
         const research = await buscarInfoDistribuidor(dist);
-        
+
         if (research) {
             dist.research = research;
-            markAsDirty();
+            await db.collection(CURRENT_COLLECTION).doc(dist.id).update({ research: research });
             const metodo = research.results[0]?.source || 'desconocido';
             alert(`✅ Búsqueda actualizada:\n• ${research.result_count} resultados encontrados\n• Método: ${metodo}\n\nAhora podés regenerar el análisis con la nueva información.`);
             mostrarResearchBadge(dist);
@@ -816,7 +820,7 @@ function mostrarAnalisisLegacy(analisis) {
 // Extender openDrawer para cargar análisis guardado
 const _originalOpenDrawer = window.openDrawer;
 if (typeof _originalOpenDrawer === 'function') {
-    window.openDrawer = function(id) {
+    window.openDrawer = function (id) {
         _originalOpenDrawer(id);
         setTimeout(() => { cargarAnalisisGuardado(); }, 150);
     };
@@ -916,9 +920,9 @@ ESTADO EN CRM:
 NOTAS: ${dist.notas_comerciales || 'Sin notas'}
 
 HISTORIAL (últimos ${ultimosLogs.length}):
-${ultimosLogs.length > 0 
-    ? ultimosLogs.map(log => `- [${log.fecha ? new Date(log.fecha).toLocaleDateString('es-AR') : '?'}] ${log.tipo}: ${log.resultado} ${log.notas ? '| ' + log.notas : ''}`).join('\n')
-    : 'Sin interacciones registradas'}
+${ultimosLogs.length > 0
+            ? ultimosLogs.map(log => `- [${log.fecha ? new Date(log.fecha).toLocaleDateString('es-AR') : '?'}] ${log.tipo}: ${log.resultado} ${log.notas ? '| ' + log.notas : ''}`).join('\n')
+            : 'Sin interacciones registradas'}
 
 PRÓXIMA ACCIÓN: ${dist.proxima_accion || 'No definida'}
 

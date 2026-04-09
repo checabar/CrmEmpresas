@@ -1,18 +1,23 @@
-# Archivos de Datos Sensibles
-db.json
-data/
+# Logs del sistema
 logs/
+
+# Caché de barrios y geocodificación (generado localmente)
+data/cache_barrios/
+
+# Credenciales de usuarios (nunca subir a repo público)
+usuarios/users.json
+
+# Scripts de mantenimiento local
+scripts/
+requirements_barrios.txt
 
 # Claves de API (Solo subir los .example)
 apis/*.txt
 !apis/*.example.txt
 
-# Archivos de sistema y configuración local
+# Archivos de sistema
 .DS_Store
 Thumbs.db
 node_modules/
 .vscode/
 .idea/
-
-# Scripts de servidor local si contienen info sensible
-# apis/server.py (puedes comentarlo si prefieres subirlo)

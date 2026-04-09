@@ -63,7 +63,9 @@ class CRMHandler(http.server.SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
+    print(f'  DEBUG: CRM_ROOT is {CRM_ROOT}')
     os.chdir(CRM_ROOT)
+    print(f'  DEBUG: Current directory is {os.getcwd()}')
     server = http.server.HTTPServer(('', PORT), CRMHandler)
     print(f'  Servidor listo en http://localhost:{PORT}')
     print(f'  Logs en: {LOGS_DIR}')

@@ -12,35 +12,306 @@ let cachedApiKey = null;
 let isDirty = false;
 let baseLoaded = false;
 
+// La colección se define ahora en data/config.js para permitir "multiplicar" la app por carpeta
+const CURRENT_COLLECTION = CRM_CONFIG.COLLECTION_NAME;
+
 // Lista fija de responsables comerciales
 const RESPONSABLES = ['Juan Cruz', 'Franco', 'Pablo', 'Santiago', 'Mai'];
 
 // ============================================
-// INICIALIZACIÓN
+// INICIALIZACIÓN (FIREBASE)
 // ============================================
 
+let firestoreUnsubscribe = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('🚀 Iniciando CRM Distribuidores...');
+    console.log('🚀 Iniciando CRM Distribuidores v105...');
 
     try {
         setupEventListeners();
 
-        if (!('showOpenFilePicker' in window)) {
-            console.warn('⚠️ File System Access API no disponible. Usando modo fallback (descarga).');
+        // Si Cloud está activo, escuchar cambios. Si no, arrancar modo local.
+        if (window.CRM_IS_CLOUD_ACTIVE) {
+            console.log('☁️ Cloud detectado, configurando Auth...');
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    console.log('👤 Usuario autenticado, iniciando escucha de Firestore...');
+                    startRealtimeSync();
+                } else {
+                    console.log('🚪 Usuario deslogueado, deteniendo sincronización.');
+                    if (firestoreUnsubscribe) {
+                        firestoreUnsubscribe();
+                        firestoreUnsubscribe = null;
+                    }
+                    allData = [];
+                    renderTable();
+                    updateDashboard();
+                }
+            });
+        } else {
+            console.log('📂 Arrancando en Modo Local (Cloud desactivado)...');
+            // En modo local, buscamos directamente el archivo de data/
+            checkLocalFileForMigration();
         }
 
         window.addEventListener('beforeunload', (e) => {
             if (isDirty) {
                 e.preventDefault();
-                e.returnValue = '¡Tenés cambios sin guardar! ¿Seguro que querés salir?';
+                e.returnValue = '¡Tenés cambios sin guardar!';
             }
         });
 
-        console.log('✅ CRM listo. Esperando carga de base...');
     } catch (error) {
         console.error('❌ Error en inicialización:', error);
     }
 });
+
+function startRealtimeSync() {
+    if (firestoreUnsubscribe) firestoreUnsubscribe();
+
+    // Actualizar indicador de estado
+    const apiStatus = document.getElementById('apiStatus');
+    if (apiStatus) {
+        apiStatus.innerHTML = '☁️ Firebase Conectado';
+        apiStatus.classList.add('active');
+    }
+
+    firestoreUnsubscribe = db.collection(CURRENT_COLLECTION).onSnapshot((snapshot) => {
+        const cloudData = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        console.log(`📥 Sincronización: ${cloudData.length} registros en la nube.`);
+
+        // Bloqueo de sobreescritura si tenemos datos locales pendientes de subir
+        if (isDirty && cloudData.length === 0) {
+            console.log('⚠️ Ignorando base vacía de la nube porque hay datos locales cargados.');
+            return;
+        }
+
+        allData = cloudData;
+
+        // Si la base está vacía en la nube, mostramos el Welcome Screen
+        if (allData.length === 0 && !baseLoaded) {
+            checkLocalFileForMigration().then(found => {
+                if (!found) showWelcomeScreen();
+            });
+        } else if (allData.length > 0) {
+            baseLoaded = true;
+            onBaseLoaded();
+        }
+    }, (error) => {
+        console.error('❌ Error de sincronización Firestore:', error);
+        alert('Error al conectar con la base de datos en tiempo real.');
+    });
+}
+
+/**
+ * Muestra la pantalla de bienvenida con opciones de carga inicial
+ * @param {string} state - 'initial', 'ready_to_sync', o 'loading'
+ */
+function showWelcomeScreen(state = 'initial', params = {}) {
+    const welcome = document.getElementById('welcomeScreen');
+    if (!welcome) return;
+
+    welcome.style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('headerActions').style.display = 'none';
+
+    const isCloud = window.CRM_IS_CLOUD_ACTIVE;
+
+    if (state === 'loading') {
+        welcome.innerHTML = `
+            <div class="welcome-content">
+                <div style="font-size: 3rem; margin-bottom: 1.5rem; animation: spin 2s linear infinite;">⏳</div>
+                <h2>Conectando...</h2>
+                <p style="color: rgba(255,255,255,0.6);">Sincronizando con la nube</p>
+            </div>
+        `;
+    } else if (state === 'initial') {
+        welcome.innerHTML = `
+            <div class="welcome-content">
+                <h2>Base de Datos No Cargada</h2>
+                <p style="margin-bottom: 1.5rem; color: rgba(255,255,255,0.7);">
+                    ${isCloud ? 'La base en la nube está vacía.' : 'El sistema está en modo Local.'} 
+                    Seleccioná tu archivo local (JSON o Excel) para empezar.
+                </p>
+                <button onclick="loadDatabase()" class="btn btn-primary welcome-btn">📂 Cargar archivo de datos</button>
+            </div>
+        `;
+    } else if (state === 'ready_to_migrate_local') {
+        const { fileName, blob } = params;
+        welcome.innerHTML = `
+            <div class="welcome-content" style="border: 2px solid var(--accent-primary);">
+                <h2 style="color: var(--accent-primary);">📂 Base Local Detectada</h2>
+                <p style="margin-bottom: 0.5rem; color: white;">
+                    Se encontró el archivo <strong>${fileName}</strong> en la carpeta data.
+                </p>
+                <p style="margin-bottom: 1.5rem; color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                    ¿Querés usarlo para iniciar el CRM de <strong>${CRM_CONFIG.BRAND_NAME}</strong>?
+                </p>
+                <div style="display: flex; gap: 1rem; flex-direction: column;">
+                    <button id="btnMigrateLocal" class="btn btn-primary welcome-btn" style="padding: 1.25rem;">
+                        ${isCloud ? '🚀 Importar y Migrar a la Nube' : '💻 Empezar a trabajar (Modo Local)'}
+                    </button>
+                    <button onclick="showWelcomeScreen('initial')" class="btn btn-link" style="color: #94a3b8; font-size: 0.8rem;">
+                        No, prefiero cargar otro archivo...
+                    </button>
+                </div>
+            </div>
+        `;
+        document.getElementById('btnMigrateLocal').onclick = async () => {
+            try {
+                const btn = document.getElementById('btnMigrateLocal');
+                btn.disabled = true;
+                btn.innerText = '⌛ Procesando Archivo...';
+
+                let dataItems = [];
+                if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                    dataItems = await parseExcel(blob);
+                } else {
+                    const text = await blob.text();
+                    const jsonObj = JSON.parse(text);
+                    dataItems = jsonObj.items || jsonObj;
+                }
+
+                allData = dataItems;
+
+                if (isCloud) {
+                    isDirty = true; // Pendiente de subir a Firebase
+                    showWelcomeScreen('ready_to_sync');
+                } else {
+                    // Modo Local: Entrar directo
+                    baseLoaded = true;
+                    onBaseLoaded();
+                }
+            } catch (err) {
+                alert('Error al procesar el archivo: ' + err.message);
+                showWelcomeScreen('initial');
+            }
+        };
+    } else if (state === 'ready_to_sync') {
+        welcome.innerHTML = `
+            <div class="welcome-content" style="border: 2px solid var(--accent-success);">
+                <h2 style="color: var(--accent-success);">✅ Datos Cargados</h2>
+                <p style="margin-bottom: 0.5rem; color: white; font-weight: bold;">
+                    Se detectaron ${allData.length} registros.
+                </p>
+                <p style="margin-bottom: 1.5rem; color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                    ${isCloud ? 'Paso 2: Presioná el botón de abajo para sincronizar con la nube.' : 'Podés empezar a trabajar en modo local.'}
+                </p>
+                <div style="display: flex; gap: 1rem; flex-direction: column;">
+                    ${isCloud ? `
+                    <button id="btnSyncWelcome" onclick="saveDatabase()" class="btn btn-success welcome-btn" style="padding: 1.25rem;">
+                        ☁️ Sincronizar todos los datos con Firebase
+                    </button>
+                    ` : `
+                    <button onclick="onBaseLoaded()" class="btn btn-success welcome-btn" style="padding: 1.25rem;">
+                        👉 Ingresar al Dashboard
+                    </button>
+                    `}
+                    <button onclick="loadDatabase()" class="btn btn-link" style="color: #94a3b8; font-size: 0.8rem;">
+                        Cambiar de archivo...
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Detecta y carga un archivo local automáticamente si está configurado
+ */
+async function checkLocalFileForMigration() {
+    if (!CRM_CONFIG.DB_FILE) return false;
+
+    try {
+        const fetchUrl = `data/${CRM_CONFIG.DB_FILE}?v=${Date.now()}`;
+        console.log(`📡 Intentando cargar base desde: ${fetchUrl}`);
+
+        const response = await fetch(fetchUrl);
+        if (!response.ok) {
+            console.warn(`⚠️ No se pudo cargar el archivo local (${response.status}): ${fetchUrl}`);
+            return false;
+        }
+
+        const blob = await response.blob();
+        console.log(`📂 Archivo local cargado con éxito: ${CRM_CONFIG.DB_FILE} (${blob.size} bytes)`);
+
+        // Modo Local: Cargar y procesar automáticamente
+        if (!window.CRM_IS_CLOUD_ACTIVE) {
+            console.log('🤖 Auto-procesando base local...');
+            let dataItems = [];
+            if (CRM_CONFIG.DB_FILE.endsWith('.xlsx') || CRM_CONFIG.DB_FILE.endsWith('.xls')) {
+                dataItems = await parseExcel(blob);
+            } else {
+                const text = await blob.text();
+                const jsonObj = JSON.parse(text);
+                dataItems = jsonObj.items || jsonObj;
+            }
+
+            allData = dataItems;
+            baseLoaded = true;
+            console.log(`✅ Base local cargada: ${allData.length} registros.`);
+
+            // Si el usuario ya está dentro (o acabamos de desbloquear), renderizar
+            if (!document.body.classList.contains('not-logged-in')) {
+                onBaseLoaded();
+            }
+            return true;
+        }
+
+        // Modo Cloud: Comportamiento original (ofrecer migración)
+        showWelcomeScreen('ready_to_migrate_local', {
+            fileName: CRM_CONFIG.DB_FILE,
+            blob: blob
+        });
+        return true;
+    } catch (e) {
+        console.error('❌ Error en checkLocalFileForMigration:', e);
+        return false;
+    }
+}
+
+/**
+ * Procesa un archivo Excel y devuelve el array de items
+ */
+async function parseExcel(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+                // Normalizar campos para empresas
+                const items = rows.map((row, index) => ({
+                    ...row,
+                    id: row.id || row.ID || `emp_${Date.now()}_${index}`,
+                    nombre: row.nombre || row.Nombre || row.NOMBRE || 'Sin Nombre',
+                    categoria: row.categoria || row.Categoria || row['Categoria'] || '',
+                    direccion: row.direccion || row.Direccion || row['Direccion'] || '',
+                    barrio: row.barrio || row.Barrio || row['Barrio'] || '',
+                    telefono_empresa: row.telefono_empresa || row.Telefono || row['Telefono'] || '',
+                    cantidad_empleados: row.cantidad_empleados || row['Cantidad de empleados'] || '',
+                    link_google: row.link_google || row['Link de Google'] || row['Link_Google'] || '',
+                    link_busqueda_empleados: row.link_busqueda_empleados || row['Link busqueda empleados'] || row['Link_busqueda_empleados'] || '',
+                    estado: row.estado || row.Estado || 'pendiente',
+                    etapa_pipeline: row.etapa_pipeline || 'nuevo'
+                }));
+
+                resolve(items);
+            } catch (err) {
+                reject(err);
+            }
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(blob);
+    });
+}
 
 // ============================================
 // CARGAR BASE
@@ -78,17 +349,30 @@ async function loadDatabase() {
             currentFileHandle = handle;
             allData = data.items;
 
-            const lastMod = data.meta?.updated_at 
+            const lastMod = data.meta?.updated_at
                 ? new Date(data.meta.updated_at).toLocaleString('es-AR')
                 : new Date(file.lastModified).toLocaleString('es-AR');
 
-            document.getElementById('lastUpdate').textContent = `Última actualización: ${lastMod}`;
+            document.getElementById('lastUpdate').textContent = `Última actualización: ${lastMod} `;
 
             baseLoaded = true;
-            isDirty = false;
-            onBaseLoaded();
+            isDirty = true;
 
-            console.log(`✅ Base cargada: ${allData.length} registros desde "${handle.name}"`);
+            if (window.CRM_IS_CLOUD_ACTIVE) {
+                // Si Firestore está activo, verificamos si está vacío para el Paso 2 (Migración)
+                const snapshot = await db.collection(CURRENT_COLLECTION).limit(1).get();
+                if (snapshot.empty) {
+                    showWelcomeScreen('ready_to_sync');
+                    console.log(`✅ Base cargada para migración: ${allData.length} registros.`);
+                } else {
+                    onBaseLoaded();
+                    console.log(`✅ Base cargada: ${allData.length} registros desde "${handle.name}"`);
+                }
+            } else {
+                // Modo Local: Entrar directo
+                onBaseLoaded();
+                console.log(`✅ Base cargada (Modo Local): ${allData.length} registros.`);
+            }
             if (window.CRMLog) CRMLog.info('DB_LOADED', { records: allData.length, file: handle.name, method: 'FileSystemAccess' });
 
         } else {
@@ -121,17 +405,26 @@ function loadDatabaseFallback() {
             currentFileHandle = null;
             allData = data.items;
 
-            const lastMod = data.meta?.updated_at 
+            const lastMod = data.meta?.updated_at
                 ? new Date(data.meta.updated_at).toLocaleString('es-AR')
                 : new Date(file.lastModified).toLocaleString('es-AR');
 
-            document.getElementById('lastUpdate').textContent = `Última actualización: ${lastMod}`;
+            document.getElementById('lastUpdate').textContent = `Última actualización: ${lastMod} `;
 
             baseLoaded = true;
-            isDirty = false;
-            onBaseLoaded();
+            isDirty = true;
 
-            console.log(`✅ Base cargada (fallback): ${allData.length} registros`);
+            if (window.CRM_IS_CLOUD_ACTIVE) {
+                const snapshot = await db.collection(CURRENT_COLLECTION).limit(1).get();
+                if (snapshot.empty) {
+                    showWelcomeScreen('ready_to_sync');
+                } else {
+                    onBaseLoaded();
+                }
+            } else {
+                // En modo local, siempre entramos al dashboard tras cargar por éxito
+                onBaseLoaded();
+            }
         } catch (error) {
             alert('❌ Error al cargar: ' + error.message);
         }
@@ -142,88 +435,72 @@ function loadDatabaseFallback() {
 }
 
 // ============================================
-// GUARDAR BASE
+// GUARDAR / MIGRAR A FIREBASE
 // ============================================
 
 async function saveDatabase() {
-    if (!baseLoaded || allData.length === 0) {
-        alert('⚠️ No hay datos para guardar.');
+    if (allData.length === 0) return;
+
+    if (!window.CRM_IS_CLOUD_ACTIVE) {
+        alert('ℹ️ Modo Local Activo.\n\nLos cambios que hagas se guardan en la memoria de la pestaña pero no se sincronizan con Firebase hasta que configures las credenciales en data/config.js.');
         return;
     }
 
-    const payload = {
-        meta: {
-            updated_at: new Date().toISOString(),
-            updated_by: 'CRM User',
-            schema: 'CHECA_CRM_DB_V1'
-        },
-        items: allData
-    };
+    const count = allData.length;
+    if (confirm(`¿Querés subir ${count} registros a Firebase ? Esto sincronizará todos los datos en la nube.`)) {
 
-    const jsonString = JSON.stringify(payload, null, 2);
+        // Buscar botones tanto en Header como en Welcome Screen
+        const btns = [
+            document.getElementById('btnSaveDB'),
+            document.getElementById('btnSyncWelcome')
+        ].filter(Boolean);
 
-    try {
-        if (currentFileHandle) {
-            // === Sobreescribir directo ===
-            const perm = await currentFileHandle.queryPermission({ mode: 'readwrite' });
-            if (perm !== 'granted') {
-                const req = await currentFileHandle.requestPermission({ mode: 'readwrite' });
-                if (req !== 'granted') {
-                    alert('⚠️ Sin permiso de escritura. Se descarga el archivo.');
-                    downloadFallback(jsonString);
-                    return;
-                }
+        btns.forEach(b => {
+            b.disabled = true;
+            b._originalText = b.innerHTML;
+            b.innerHTML = '⏳ Subiendo...';
+        });
+
+        try {
+            // Firestore tiene un límite de 500 escrituras por batch.
+            // Dividimos allData en trozos (chunks) de 400.
+            const chunkSize = 400;
+            const chunks = [];
+            for (let i = 0; i < allData.length; i += chunkSize) {
+                chunks.push(allData.slice(i, i + chunkSize));
             }
 
-            const writable = await currentFileHandle.createWritable();
-            await writable.write(jsonString);
-            await writable.close();
+            console.log(`🚀 Iniciando subida de ${count} registros en ${chunks.length} lotes...`);
 
+            for (let i = 0; i < chunks.length; i++) {
+                const batch = db.batch();
+                chunks[i].forEach(item => {
+                    if (!item.id) {
+                        item.id = generateID(item.nombre, item.barrio || item['Barrio'] || '', item.categoria || '');
+                    }
+                    const docRef = db.collection(CURRENT_COLLECTION).doc(item.id);
+                    batch.set(docRef, item, { merge: true });
+                });
+
+                await batch.commit();
+                console.log(`✅ Lote ${i + 1}/${chunks.length} completado.`);
+            }
+
+            alert('✅ Sincronización completa con Firebase. Los datos ya están seguros en la nube.');
             isDirty = false;
-            updateStatus('saved');
+            baseLoaded = true;
+            onBaseLoaded(); // Ahora sí, entramos al CRM
 
-            const now = new Date().toLocaleString('es-AR');
-            document.getElementById('lastUpdate').textContent = `Última actualización: ${now}`;
-
-            // Feedback visual en botón
-            const btnSave = document.getElementById('btnSaveDB');
-            const originalText = btnSave.innerHTML;
-            btnSave.innerHTML = '✅ Guardado!';
-            btnSave.style.background = '#10b981';
-            setTimeout(() => {
-                btnSave.innerHTML = originalText;
-                btnSave.style.background = '';
-            }, 2500);
-
-            console.log('✅ Base guardada directamente.');
-            if (window.CRMLog) CRMLog.info('DB_SAVED', { records: allData.length, method: 'FileSystemAccess' });
-
-        } else {
-            // === Fallback: descargar ===
-            downloadFallback(jsonString);
-        }
-
-    } catch (error) {
-        console.error('❌ Error guardando:', error);
-        if (window.CRMLog) CRMLog.error('DB_SAVE_ERROR', { message: error.message, name: error.name });
-        if (confirm('❌ Error al guardar.\n\n¿Descargar el archivo para reemplazarlo manualmente?')) {
-            downloadFallback(jsonString);
+        } catch (error) {
+            console.error('Error migrando:', error);
+            alert('❌ Error al subir datos: ' + error.message + '\n\nPor favor, verificá tu conexión.');
+        } finally {
+            btns.forEach(b => {
+                b.disabled = false;
+                b.innerHTML = b._originalText;
+            });
         }
     }
-}
-
-function downloadFallback(jsonString) {
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'db.json';
-    a.click();
-    URL.revokeObjectURL(url);
-
-    isDirty = false;
-    updateStatus('saved');
-    alert('✅ Archivo descargado.\n\nReemplazá "db.json" en tu carpeta de Dropbox.');
 }
 
 // ============================================
@@ -231,14 +508,57 @@ function downloadFallback(jsonString) {
 // ============================================
 
 function onBaseLoaded() {
+    // Si no hay datos todavía (pero estamos en modo local), esperar o avisar
+    if (allData.length === 0 && !window.CRM_IS_CLOUD_ACTIVE && !baseLoaded) {
+        console.log('⏳ onBaseLoaded: Esperando que termine la carga del archivo local...');
+        return;
+    }
+
     // Ocultar welcome, mostrar contenido y header actions
-    document.getElementById('welcomeScreen').style.display = 'none';
-    document.getElementById('mainContent').style.display = 'block';
-    document.getElementById('headerActions').style.display = 'flex';
+    const welcome = document.getElementById('welcomeScreen');
+    const main = document.getElementById('mainContent');
+    const header = document.getElementById('headerActions');
+
+    if (welcome) welcome.style.display = 'none';
+    if (main) main.style.display = 'block';
+    if (header) header.style.display = 'flex';
 
     updateStatus('loaded');
+    updateCollectionUI();
     loadLocalData();
 }
+
+/**
+ * Actualiza info básica de la base en la UI
+ */
+function updateCollectionUI() {
+    const badge = document.getElementById('activeCollectionNameHeader') || document.getElementById('activeCollectionName');
+    const apiStatus = document.getElementById('apiStatus');
+
+    if (badge) {
+        badge.innerText = CURRENT_COLLECTION;
+        badge.parentElement.style.display = 'block';
+    }
+
+    if (apiStatus) {
+        if (window.CRM_IS_CLOUD_ACTIVE) {
+            apiStatus.innerHTML = '☁️ Nube Conectada';
+            apiStatus.classList.add('active');
+            apiStatus.style.background = 'rgba(74, 222, 128, 0.1)';
+            apiStatus.style.color = '#4ade80';
+        } else {
+            apiStatus.innerHTML = '💻 Modo Local (Sin Nube)';
+            apiStatus.classList.remove('active');
+            apiStatus.style.background = 'rgba(255, 255, 255, 0.05)';
+            apiStatus.style.color = '#94a3b8';
+        }
+    }
+}
+
+// Ya no se usa switchCollection dinámico
+// Recargar para reiniciar todo con la nueva colección
+
+// Ya no se usa createNewCollection dinámico
 
 // ============================================
 // ESTADO VISUAL
@@ -279,26 +599,26 @@ function loadLocalData() {
 }
 
 async function updateField(id, field, value) {
-    const item = allData.find(d => d.id === id);
-    if (!item) return;
-
-    item[field] = value;
-    if (field === 'estado' && value === 'contactado' && !item.fecha_ultimo_contacto) {
-        item.fecha_ultimo_contacto = new Date().toISOString();
+    try {
+        const updateData = { [field]: value };
+        if (field === 'estado' && value === 'contactado') {
+            updateData.fecha_ultimo_contacto = new Date().toISOString();
+        }
+        await db.collection(CURRENT_COLLECTION).doc(id).update(updateData);
+        console.log(`✅ Campo ${field} actualizado en Firebase para ${id}`);
+    } catch (error) {
+        console.error('Error actualizando campo:', error);
     }
-
-    markAsDirty();
-    updateDashboard();
 }
 
 // ============================================
 // UTILIDADES
 // ============================================
 
-function generateID(nombre, provincia, ciudad) {
+function generateID(nombre, barrio, extra) {
     const normalize = (str) => (str || '').toString().toLowerCase().trim().replace(/\s+/g, '');
-    const combined = normalize(nombre) + normalize(provincia) + normalize(ciudad);
-    return 'dist_' + Math.abs(simpleHash(combined)).toString(36);
+    const combined = normalize(nombre) + normalize(barrio) + normalize(extra);
+    return 'emp_' + Math.abs(simpleHash(combined)).toString(36);
 }
 
 function simpleHash(str) {
@@ -357,16 +677,15 @@ function renderTable() {
         };
 
         // Responsable: select fijo
-        const respOptions = RESPONSABLES.map(r => 
+        const respOptions = RESPONSABLES.map(r =>
             `<option value="${r}" ${dist.responsable_comercial === r ? 'selected' : ''}>${r}</option>`
         ).join('');
 
         row.innerHTML = `
             <td><strong>${dist.nombre}</strong></td>
-            <td>${dist.provincia}</td>
-            <td>${dist.ciudad}</td>
-            <td>${dist.puntaje || 0}</td>
-            <td>${dist.categoria}</td>
+            <td>${dist.barrio || dist['Barrio'] || ''}</td>
+            <td>${dist.categoria || ''}</td>
+            <td>${dist.cantidad_empleados || dist['Cantidad de empleados'] || '-'}</td>
             <td>
                 <span class="badge-estado badge-${estadoMostrar}">${estadoLabel[estadoMostrar] || estadoMostrar}</span>
             </td>
@@ -381,14 +700,15 @@ function renderTable() {
             </td>
             <td class="action-btns">
                 <button class="btn-icon" onclick="openDrawer('${dist.id}')">📝</button>
-                <button class="btn-icon" onclick="openGoogle('${dist.link_google}')">🌐</button>
+                <button class="btn-icon" onclick="openGoogle(this)" data-link="${dist.link_google || dist['Link de Google'] || ''}" title="Ver en Google Maps">🗺️</button>
             </td>
         `;
         tbody.appendChild(row);
     });
 }
 
-function openGoogle(link) {
+function openGoogle(btnOrLink) {
+    const link = (typeof btnOrLink === 'string') ? btnOrLink : btnOrLink.dataset.link;
     if (link) window.open(link, '_blank');
     else alert('No hay link de Google Maps');
 }
@@ -415,11 +735,11 @@ function setupEventListeners() {
 
     // Filtros tabla
     document.getElementById('filterNombre')?.addEventListener('input', applyFilters);
-    ['filterProvincia', 'filterCategoria', 'filterEstado', 'filterResponsable'].forEach(id => {
+    ['filterBarrio', 'filterCategoria', 'filterEstado', 'filterResponsable'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', applyFilters);
     });
     document.getElementById('btnClearFilters')?.addEventListener('click', () => {
-        ['filterNombre', 'filterProvincia', 'filterCategoria', 'filterEstado', 'filterResponsable'].forEach(id => {
+        ['filterNombre', 'filterBarrio', 'filterCategoria', 'filterEstado', 'filterResponsable'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -432,7 +752,7 @@ function setupEventListeners() {
     document.getElementById('btnAddLog')?.addEventListener('click', addLogEvento);
 
     // Dashboard Filters
-    ['dashFilterCategoria', 'dashFilterResponsable', 'dashFilterEstado', 'dashFilterProvincia'].forEach(id => {
+    ['dashFilterCategoria', 'dashFilterResponsable', 'dashFilterEstado', 'dashFilterBarrio'].forEach(id => {
         document.getElementById(id)?.addEventListener('change', (e) => {
             const field = id.replace('dashFilter', '').toLowerCase();
             dashFilters[field] = e.target.value;
@@ -441,8 +761,8 @@ function setupEventListeners() {
     });
 
     document.getElementById('btnClearDashFilters')?.addEventListener('click', () => {
-        dashFilters = { categoria: '', responsable: '', estado: '', provincia: '' };
-        ['dashFilterCategoria', 'dashFilterResponsable', 'dashFilterEstado', 'dashFilterProvincia'].forEach(id => {
+        dashFilters = { categoria: '', responsable: '', estado: '', barrio: '' };
+        ['dashFilterCategoria', 'dashFilterResponsable', 'dashFilterEstado', 'dashFilterBarrio'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
@@ -464,7 +784,7 @@ function setupEventListeners() {
 function applyFilters() {
     const filters = {
         nombre: document.getElementById('filterNombre')?.value.toLowerCase() || '',
-        provincia: document.getElementById('filterProvincia')?.value || '',
+        barrio: document.getElementById('filterBarrio')?.value || '',
         categoria: document.getElementById('filterCategoria')?.value || '',
         estado: document.getElementById('filterEstado')?.value || '',
         responsable: document.getElementById('filterResponsable')?.value || ''
@@ -472,8 +792,11 @@ function applyFilters() {
 
     filteredData = allData.filter(d => {
         if (d.inactivo) return false;
-        if (filters.nombre && !d.nombre.toLowerCase().includes(filters.nombre)) return false;
-        if (filters.provincia && d.provincia !== filters.provincia) return false;
+        const nombre = (d.nombre || '').toLowerCase();
+        const direccion = (d.direccion || d['Direccion'] || '').toLowerCase();
+        if (filters.nombre && !nombre.includes(filters.nombre) && !direccion.includes(filters.nombre)) return false;
+        const barrio = d.barrio || d['Barrio'] || '';
+        if (filters.barrio && barrio !== filters.barrio) return false;
         if (filters.categoria && d.categoria !== filters.categoria) return false;
         if (filters.estado && d.estado !== filters.estado) return false;
         if (filters.responsable && d.responsable_comercial !== filters.responsable) return false;
@@ -493,13 +816,25 @@ window.openDrawer = function (id) {
     currentDistributor = dist;
 
     document.getElementById('drawerTitle').textContent = dist.nombre;
+
+    // Datos de la empresa (solo lectura)
+    document.getElementById('drawerDireccion').value = dist.direccion || dist['Direccion'] || '';
+    document.getElementById('drawerBarrio').value = dist.barrio || dist['Barrio'] || '';
+    document.getElementById('drawerTelefonoEmpresa').value = dist.telefono_empresa || dist['Telefono'] || '';
+    document.getElementById('drawerEmpleados').value = dist.cantidad_empleados || dist['Cantidad de empleados'] || '';
+
+    // Botones de links
+    const linkMaps = dist.link_google || dist['Link de Google'] || '';
+    const linkBusqueda = dist.link_busqueda_empleados || dist['Link busqueda empleados'] || '';
+    document.getElementById('btnVerMaps').onclick = () => linkMaps ? window.open(linkMaps, '_blank') : alert('Sin link de Google Maps');
+    document.getElementById('btnBuscarEmpleados').onclick = () => linkBusqueda ? window.open(linkBusqueda, '_blank') : alert('Sin link de búsqueda');
+
+    // Campos CRM editables
     document.getElementById('drawerEstado').value = dist.estado || 'pendiente';
     document.getElementById('drawerEtapa').value = dist.etapa_pipeline || 'nuevo';
     document.getElementById('drawerProbabilidad').value = dist.probabilidad || 0;
     document.getElementById('drawerResponsable').value = dist.responsable_comercial || '';
-
     document.getElementById('drawerNombreContacto').value = dist.nombre_contacto || '';
-    document.getElementById('drawerTelefono').value = dist.telefono_contacto || '';
     document.getElementById('drawerEmail').value = dist.email_contacto || '';
     document.getElementById('drawerFechaContacto').value = formatDate(dist.fecha_ultimo_contacto);
     document.getElementById('drawerProximaAccion').value = dist.proxima_accion || '';
@@ -515,27 +850,33 @@ function closeDrawer() {
     currentDistributor = null;
 }
 
-function saveDrawer() {
+async function saveDrawer() {
     if (!currentDistributor) return;
 
-    currentDistributor.estado = document.getElementById('drawerEstado').value;
-    currentDistributor.etapa_pipeline = document.getElementById('drawerEtapa').value;
-    currentDistributor.probabilidad = parseInt(document.getElementById('drawerProbabilidad').value) || 0;
-    currentDistributor.responsable_comercial = document.getElementById('drawerResponsable').value;
-    currentDistributor.nombre_contacto = document.getElementById('drawerNombreContacto').value;
-    currentDistributor.telefono_contacto = document.getElementById('drawerTelefono').value;
-    currentDistributor.email_contacto = document.getElementById('drawerEmail').value;
-    currentDistributor.fecha_ultimo_contacto = document.getElementById('drawerFechaContacto').value || null;
-    currentDistributor.proxima_accion = document.getElementById('drawerProximaAccion').value;
-    currentDistributor.fecha_proxima_accion = document.getElementById('drawerFechaProximaAccion').value || null;
-    currentDistributor.notas_comerciales = document.getElementById('drawerNotas').value;
+    const updatedData = {
+        estado: document.getElementById('drawerEstado').value,
+        etapa_pipeline: document.getElementById('drawerEtapa').value,
+        probabilidad: parseInt(document.getElementById('drawerProbabilidad').value) || 0,
+        responsable_comercial: document.getElementById('drawerResponsable').value,
+        nombre_contacto: document.getElementById('drawerNombreContacto').value,
+        email_contacto: document.getElementById('drawerEmail').value,
+        fecha_ultimo_contacto: document.getElementById('drawerFechaContacto').value || null,
+        proxima_accion: document.getElementById('drawerProximaAccion').value,
+        fecha_proxima_accion: document.getElementById('drawerFechaProximaAccion').value || null,
+        notas_comerciales: document.getElementById('drawerNotas').value
+    };
 
-    markAsDirty();
-    loadLocalData();
-    closeDrawer();
+    try {
+        await db.collection(CURRENT_COLLECTION).doc(currentDistributor.id).update(updatedData);
+        console.log('✅ Cambios guardados en Firebase');
+        closeDrawer();
+    } catch (error) {
+        console.error('Error guardando drawer:', error);
+        alert('Error al guardar los cambios.');
+    }
 }
 
-function addLogEvento() {
+async function addLogEvento() {
     if (!currentDistributor) return;
 
     const evento = {
@@ -545,14 +886,20 @@ function addLogEvento() {
         notas: document.getElementById('logNotas').value
     };
 
-    if (!currentDistributor.historial_contactos) currentDistributor.historial_contactos = [];
-    currentDistributor.historial_contactos.unshift(evento);
-    currentDistributor.fecha_ultimo_contacto = evento.fecha;
+    try {
+        const docRef = db.collection(CURRENT_COLLECTION).doc(currentDistributor.id);
+        await docRef.update({
+            historial_contactos: firebase.firestore.FieldValue.arrayUnion(evento),
+            fecha_ultimo_contacto: evento.fecha,
+            estado: 'contactado' // Al agregar evento, asumimos contactado
+        });
 
-    markAsDirty();
-    document.getElementById('logNotas').value = '';
-    renderLogContactos();
-    document.getElementById('drawerFechaContacto').value = formatDate(evento.fecha);
+        document.getElementById('logNotas').value = '';
+        console.log('✅ Evento agregado a Firebase');
+    } catch (error) {
+        console.error('Error agregando evento:', error);
+        alert('Error al guardar el evento.');
+    }
 }
 
 function renderLogContactos() {
@@ -570,27 +917,27 @@ function renderLogContactos() {
     `).join('') : '<p style="text-align:center;color:#999">Sin actividad</p>';
 }
 
-let dashFilters = { categoria: '', responsable: '', estado: '', provincia: '' };
+let dashFilters = { categoria: '', responsable: '', estado: '', barrio: '' };
 
 function applyDashboardFilters() {
     let filtered = allData.filter(d => !d.inactivo);
     if (dashFilters.categoria) filtered = filtered.filter(d => d.categoria === dashFilters.categoria);
     if (dashFilters.responsable) filtered = filtered.filter(d => d.responsable_comercial === dashFilters.responsable);
     if (dashFilters.estado) filtered = filtered.filter(d => d.estado === dashFilters.estado);
-    if (dashFilters.provincia) filtered = filtered.filter(d => d.provincia === dashFilters.provincia);
+    if (dashFilters.barrio) filtered = filtered.filter(d => (d.barrio || d['Barrio'] || '') === dashFilters.barrio);
     updateDashboard(filtered);
 }
 
 function populateFilters() {
     const fields = {
-        filterProvincia: 'provincia',
-        filterCategoria: 'categoria',
-        filterResponsable: 'responsable_comercial'
+        filterBarrio: d => d.barrio || d['Barrio'] || '',
+        filterCategoria: d => d.categoria || '',
+        filterResponsable: d => d.responsable_comercial || ''
     };
-    for (const [id, field] of Object.entries(fields)) {
+    for (const [id, getter] of Object.entries(fields)) {
         const select = document.getElementById(id);
         if (!select) continue;
-        const values = [...new Set(allData.map(d => d[field]).filter(Boolean))].sort();
+        const values = [...new Set(allData.map(getter).filter(Boolean))].sort();
         const originalValue = select.value;
         select.innerHTML = `<option value="">Todos/as</option>` + values.map(v => `<option value="${v}">${v}</option>`).join('');
         select.value = originalValue;
@@ -599,14 +946,14 @@ function populateFilters() {
 
 function populateDashboardFilters() {
     const fields = {
-        dashFilterProvincia: 'provincia',
-        dashFilterCategoria: 'categoria',
-        dashFilterResponsable: 'responsable_comercial'
+        dashFilterBarrio: d => d.barrio || d['Barrio'] || '',
+        dashFilterCategoria: d => d.categoria || '',
+        dashFilterResponsable: d => d.responsable_comercial || ''
     };
-    for (const [id, field] of Object.entries(fields)) {
+    for (const [id, getter] of Object.entries(fields)) {
         const select = document.getElementById(id);
         if (!select) continue;
-        const values = [...new Set(allData.map(d => d[field]).filter(Boolean))].sort();
+        const values = [...new Set(allData.map(getter).filter(Boolean))].sort();
         select.innerHTML = `<option value="">Todas</option>` + values.map(v => `<option value="${v}">${v}</option>`).join('');
     }
 }

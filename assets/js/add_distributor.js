@@ -1,6 +1,6 @@
 // ============================================================================
-// AGREGAR NUEVO DISTRIBUIDOR
-// Maneja el modal y la lógica para crear nuevos distribuidores
+// AGREGAR NUEVA EMPRESA
+// Maneja el modal y la lógica para crear nuevas empresas
 // ============================================================================
 
 (function () {
@@ -15,10 +15,13 @@
 
     // Campos del formulario
     const newNombre = document.getElementById('newNombre');
-    const newProvincia = document.getElementById('newProvincia');
-    const newCiudad = document.getElementById('newCiudad');
     const newCategoria = document.getElementById('newCategoria');
+    const newDireccion = document.getElementById('newDireccion');
+    const newBarrio = document.getElementById('newBarrio');
+    const newTelefono = document.getElementById('newTelefono');
+    const newEmpleados = document.getElementById('newEmpleados');
     const newLinkGoogle = document.getElementById('newLinkGoogle');
+    const newLinkBusqueda = document.getElementById('newLinkBusqueda');
 
     // ========================================================================
     // ABRIR MODAL
@@ -30,16 +33,9 @@
     }
 
     function openAddModal() {
-        // Limpiar formulario
         addDistributorForm.reset();
-
-        // Mostrar modal
         addDistributorModal.style.display = 'flex';
-
-        // Focus en primer campo
-        setTimeout(() => {
-            newNombre.focus();
-        }, 100);
+        setTimeout(() => { newNombre.focus(); }, 100);
     }
 
     // ========================================================================
@@ -50,74 +46,55 @@
         addDistributorForm.reset();
     }
 
-    // Botón X
-    if (btnCloseAddModal) {
-        btnCloseAddModal.addEventListener('click', closeAddModal);
-    }
+    if (btnCloseAddModal) btnCloseAddModal.addEventListener('click', closeAddModal);
+    if (btnCancelAdd) btnCancelAdd.addEventListener('click', closeAddModal);
 
-    // Botón Cancelar
-    if (btnCancelAdd) {
-        btnCancelAdd.addEventListener('click', closeAddModal);
-    }
-
-    // Click fuera del modal
     if (addDistributorModal) {
         addDistributorModal.addEventListener('click', function (e) {
-            if (e.target === addDistributorModal) {
-                closeAddModal();
-            }
+            if (e.target === addDistributorModal) closeAddModal();
         });
     }
 
     // ========================================================================
-    // GUARDAR NUEVO DISTRIBUIDOR
+    // GUARDAR NUEVA EMPRESA
     // ========================================================================
     if (addDistributorForm) {
         addDistributorForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            // Validar campos requeridos
             if (!newNombre.value.trim()) {
                 alert('⚠️ El nombre es obligatorio');
                 newNombre.focus();
                 return;
             }
 
-            if (!newProvincia.value) {
-                alert('⚠️ La provincia es obligatoria');
-                newProvincia.focus();
-                return;
-            }
-
-            if (!newCiudad.value.trim()) {
-                alert('⚠️ La ciudad es obligatoria');
-                newCiudad.focus();
-                return;
-            }
-
-            if (!newCategoria.value) {
-                alert('⚠️ La categoría es obligatoria');
+            if (!newCategoria.value.trim()) {
+                alert('⚠️ La categoría/rubro es obligatorio');
                 newCategoria.focus();
                 return;
             }
 
-            // Crear objeto distribuidor
-            const nuevoDistribuidor = {
+            const nombre = newNombre.value.trim();
+            const barrio = newBarrio.value.trim();
+            const categoria = newCategoria.value.trim();
+
+            const nuevaEmpresa = {
                 id: (typeof generateID === 'function')
-                    ? generateID(newNombre.value, newProvincia.value, newCiudad.value)
-                    : 'dist_' + Date.now(),
-                nombre: newNombre.value.trim(),
-                provincia: newProvincia.value,
-                ciudad: newCiudad.value.trim(),
-                categoria: newCategoria.value,
-                link_google: newLinkGoogle.value.trim() || '',
+                    ? generateID(nombre, barrio, categoria)
+                    : 'emp_' + Date.now(),
+                nombre: nombre,
+                categoria: categoria,
+                direccion: newDireccion.value.trim(),
+                barrio: barrio,
+                telefono_empresa: newTelefono.value.trim(),
+                cantidad_empleados: newEmpleados.value,
+                link_google: newLinkGoogle.value.trim(),
+                link_busqueda_empleados: newLinkBusqueda.value.trim(),
                 estado: 'pendiente',
                 etapa_pipeline: 'nuevo',
                 probabilidad: 0,
-                puntaje: 0,
                 responsable_comercial: '',
                 nombre_contacto: '',
-                telefono_contacto: '',
                 email_contacto: '',
                 fecha_ultimo_contacto: null,
                 proxima_accion: '',
@@ -128,37 +105,29 @@
                 inactivo: false
             };
 
-            // Agregar a los datos globales (allData está en app_new.js)
-            if (typeof allData !== 'undefined') {
-                allData.push(nuevoDistribuidor);
-
-                // Marcar cambios y refrescar vista
-                if (typeof markAsDirty === 'function') markAsDirty();
-                if (typeof loadLocalData === 'function') loadLocalData();
-
-                alert(`✅ Distribuidor "${nuevoDistribuidor.nombre}" agregado.\n\nRecordá hacer click en "Guardar Base" para persistir los cambios.`);
-                closeAddModal();
-
+            if (window.CRM_IS_CLOUD_ACTIVE) {
+                db.collection(CURRENT_COLLECTION).doc(nuevaEmpresa.id).set(nuevaEmpresa)
+                    .then(() => {
+                        console.log('✅ Empresa agregada a Firebase');
+                        closeAddModal();
+                    })
+                    .catch((error) => {
+                        console.error('❌ Error agregando a Firebase:', error);
+                        alert('Error al guardar en la nube: ' + error.message);
+                    });
             } else {
-                console.error('❌ allData no definido');
-                alert('❌ Error de sistema: no se pudo acceder a la base.');
+                // Modo local
+                allData.push(nuevaEmpresa);
+                closeAddModal();
+                if (typeof loadLocalData === 'function') loadLocalData();
             }
         });
-    }
-
-    // ========================================================================
-    // UTILIDADES
-    // ========================================================================
-    function generateId() {
-        // Generar ID único basado en timestamp y random
-        return 'dist_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
 
     // ========================================================================
     // ATAJOS DE TECLADO
     // ========================================================================
     document.addEventListener('keydown', function (e) {
-        // ESC para cerrar modal
         if (e.key === 'Escape' && addDistributorModal.style.display === 'flex') {
             closeAddModal();
         }

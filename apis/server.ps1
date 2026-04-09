@@ -125,9 +125,9 @@ while ($listener.IsListening) {
             Write-Host "  200 $url"
         } else {
             $resp.StatusCode = 404
-            $msg = [System.Text.Encoding]::UTF8.GetBytes("404 - $url not found")
+            $msg = [System.Text.Encoding]::UTF8.GetBytes("404 - $url not found at $filePath")
             $resp.OutputStream.Write($msg, 0, $msg.Length)
-            Write-Host "  404 $url" -ForegroundColor Yellow
+            Write-Host "  404 $url (Full Path checked: $filePath)" -ForegroundColor Yellow
         }
 
         $resp.OutputStream.Close()

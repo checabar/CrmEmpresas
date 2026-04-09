@@ -4,8 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM Distribuidores - Checa</title>
-    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+    <title id="pageTitle">CRM Empresas</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link id="favicon" rel="icon" type="image/svg+xml" href="image/favicon.svg">
+
+    <!-- CARGAR CONFIGURACIÓN LOCAL -->
+    <script src="data/config.js"></script>
+    <link rel="icon" type="image/svg+xml" href="image/favicon.svg">
 
     <!-- CDN: SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -39,16 +46,44 @@
             display: flex !important;
         }
     </style>
+    <!-- Inicializar Firebase con Config de Local -->
+    <script>
+        window.CRM_IS_CLOUD_ACTIVE = false;
+        let db = null;
+        let auth = null;
+
+        // Aplicar Branding e Inicializar
+        if (typeof CRM_CONFIG !== 'undefined') {
+            document.title = CRM_CONFIG.BRAND_NAME;
+            const brandEl = document.getElementById('brandName');
+            if (brandEl) brandEl.innerText = CRM_CONFIG.BRAND_NAME;
+
+            // Solo inicializar si hay API Key (Modo Cloud Activado)
+            if (CRM_CONFIG.FIREBASE && CRM_CONFIG.FIREBASE.apiKey) {
+                try {
+                    firebase.initializeApp(CRM_CONFIG.FIREBASE);
+                    db = firebase.firestore();
+                    auth = firebase.auth();
+                    window.CRM_IS_CLOUD_ACTIVE = true;
+                    console.log("☁️ Firebase inicializado correctamente.");
+                } catch (e) {
+                    console.error("❌ Error inicializando Firebase:", e);
+                }
+            } else {
+                console.log("📂 Modo Local Activo (Sin configuración de Firebase)");
+            }
+        }
+    </script>
 </head>
 
 <body class="not-logged-in">
     <!-- Login Overlay -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-card">
-            <div class="login-header" style="background: url('assets/img/checa_imagen.jpg') center/cover no-repeat;">
+            <div class="login-header" style="background: url('image/checa_imagen.jpg') center/cover no-repeat;">
                 <div class="login-header-overlay"></div>
                 <div class="login-header-content">
-                    <img src="assets/img/favicon.svg" alt="Checa Logo" class="login-logo">
+                    <img src="image/favicon.svg" alt="Checa Logo" class="login-logo">
                     <h2>Acceso CRM</h2>
                 </div>
             </div>
@@ -71,18 +106,19 @@
     </div>
 
     <!-- Barra Superior -->
-    <header class="header"
-        style="background: url('assets/img/checa_imagen.jpg') center/cover no-repeat; position:relative;">
+    <header class="header" style="background: url('image/checa_imagen.jpg') center/cover no-repeat; position:relative;">
         <div style="position:absolute; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(2px);"></div>
         <div class="header-content" style="position:relative; z-index:1;">
             <div class="header-left">
-                <div class="logo-container">
-                    <div>
-                        <h1>CRM Distribuidores - Checa</h1>
-                        <div id="lastUpdate" class="last-update">Última actualización: -</div>
-                        <div id="apiStatus" class="api-status">📝 Modo Offline</div>
+                <div class="header-logo">
+                    <img src="image/favicon.svg" alt="Logo">
+                    <div class="logo-text">
+                        <h1 id="brandName">CRM Empresas</h1>
+                        <span id="activeCollectionName" style="display:none"></span>
                     </div>
                 </div>
+                <div id="lastUpdate" class="last-update">Última actualización: -</div>
+                <div id="apiStatus" class="api-status">📝 Modo Offline</div>
             </div>
 
             <!-- Controles del header: solo visibles cuando hay base cargada -->
@@ -101,7 +137,7 @@
                 </button>
 
                 <button id="btnAddDistributor" class="btn btn-primary"
-                    title="Crear un nuevo distribuidor en el sistema">➕ Agregar</button>
+                    title="Crear una nueva empresa en el sistema">➕ Agregar Empresa</button>
             </div>
         </div>
     </header>
@@ -145,19 +181,19 @@
         <!-- Dashboard KPIs -->
         <section class="dashboard">
             <div class="kpi-container">
-                <div class="kpi-card" title="Cantidad total de distribuidores registrados en el sistema">
+                <div class="kpi-card" title="Cantidad total de empresas registradas en el sistema">
                     <div class="kpi-value" id="kpiTotal">0</div>
-                    <div class="kpi-label">Total Distribuidores</div>
+                    <div class="kpi-label">Total Empresas</div>
                 </div>
-                <div class="kpi-card kpi-success" title="Distribuidores que ya fueron contactados">
+                <div class="kpi-card kpi-success" title="Empresas que ya fueron contactadas">
                     <div class="kpi-value" id="kpiContactados">0</div>
-                    <div class="kpi-label">Contactados</div>
+                    <div class="kpi-label">Contactadas</div>
                 </div>
-                <div class="kpi-card kpi-warning" title="Distribuidores pendientes de contactar">
+                <div class="kpi-card kpi-warning" title="Empresas pendientes de contactar">
                     <div class="kpi-value" id="kpiPendientes">0</div>
                     <div class="kpi-label">Pendientes</div>
                 </div>
-                <div class="kpi-card kpi-info" title="Distribuidores en proceso de negociación comercial">
+                <div class="kpi-card kpi-info" title="Empresas en proceso de negociación comercial">
                     <div class="kpi-value" id="kpiNegociacion">0</div>
                     <div class="kpi-label">En Negociación</div>
                 </div>
@@ -167,7 +203,7 @@
             <div class="dashboard-filters">
                 <h3>📊 Filtrar Visualizaciones:</h3>
                 <select id="dashFilterCategoria" class="dash-filter"
-                    title="Filtrar gráficos por tipo de negocio del distribuidor">
+                    title="Filtrar gráficos por rubro de la empresa">
                     <option value="">Todas las categorías</option>
                 </select>
                 <select id="dashFilterResponsable" class="dash-filter"
@@ -179,9 +215,9 @@
                     <option value="pendiente">Solo Pendientes</option>
                     <option value="contactado">Solo Contactados</option>
                 </select>
-                <select id="dashFilterProvincia" class="dash-filter"
-                    title="Filtrar gráficos por provincia de Argentina">
-                    <option value="">Todas las provincias</option>
+                <select id="dashFilterBarrio" class="dash-filter"
+                    title="Filtrar gráficos por barrio">
+                    <option value="">Todos los barrios</option>
                 </select>
                 <button id="btnClearDashFilters" class="btn btn-secondary-small"
                     title="Limpiar todos los filtros del dashboard">🔄 Limpiar</button>
@@ -213,22 +249,22 @@
 
             <!-- Grid de Gráficos 2x2 -->
             <div class="charts-grid">
-                <div class="chart-box" title="Distribución geográfica de distribuidores por provincia">
-                    <h3>📍 Por Provincia</h3>
+                <div class="chart-box" title="Distribución geográfica de empresas por barrio">
+                    <h3>📍 Por Barrio</h3>
                     <div id="chartProvincias" style="width: 100%; height: 300px;"></div>
                 </div>
 
-                <div class="chart-box" title="Tipos de negocios que distribuyen productos Checa">
-                    <h3>🏷️ Por Categoría</h3>
+                <div class="chart-box" title="Rubros de las empresas registradas">
+                    <h3>🏷️ Por Categoría/Rubro</h3>
                     <div id="chartCategorias" style="width: 100%; height: 300px;"></div>
                 </div>
 
-                <div class="chart-box" title="Distribución de cartera comercial por vendedor responsable">
+                <div class="chart-box" title="Distribución de empresas por vendedor responsable">
                     <h3>👥 Asignados por Responsable</h3>
                     <div id="chartResponsables" style="width: 100%; height: 300px;"></div>
                 </div>
 
-                <div class="chart-box" title="Calendario de próximos contactos programados con distribuidores">
+                <div class="chart-box" title="Calendario de próximos contactos programados con empresas">
                     <h3>📅 Próximos Contactos</h3>
                     <div id="chartPuntajes" style="width: 100%; height: 300px;"></div>
                 </div>
@@ -237,12 +273,12 @@
 
         <!-- Filtros -->
         <section class="filters">
-            <input type="text" id="filterNombre" placeholder="🔍 Buscar por nombre..."
-                title="Buscar distribuidores por nombre, ciudad, contacto o cualquier dato">
-            <select id="filterProvincia" title="Filtrar distribuidores por provincia">
-                <option value="">Todas las provincias</option>
+            <input type="text" id="filterNombre" placeholder="🔍 Buscar por nombre, dirección..."
+                title="Buscar empresas por nombre, dirección, categoría o cualquier dato">
+            <select id="filterBarrio" title="Filtrar por barrio">
+                <option value="">Todos los barrios</option>
             </select>
-            <select id="filterCategoria" title="Filtrar por tipo de negocio">
+            <select id="filterCategoria" title="Filtrar por rubro/categoría">
                 <option value="">Todas las categorías</option>
             </select>
             <select id="filterEstado" title="Filtrar por estado de contacto">
@@ -262,11 +298,10 @@
             <table id="mainTable">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
-                        <th>Provincia</th>
-                        <th>Ciudad</th>
-                        <th>Puntaje</th>
-                        <th>Categoría</th>
+                        <th>Empresa</th>
+                        <th>Barrio</th>
+                        <th>Categoría/Rubro</th>
+                        <th>Empleados</th>
                         <th>Estado</th>
                         <th>Responsable</th>
                         <th>Etapa</th>
@@ -291,7 +326,7 @@
 
             <div class="drawer-tabs">
                 <button class="tab-btn active" data-tab="info"
-                    title="Información básica y comercial del distribuidor">📋 Información</button>
+                    title="Información de la empresa y gestión comercial">📋 Información</button>
                 <button class="tab-btn" data-tab="asistente"
                     title="Análisis de mercado e inteligencia comercial con IA">🤖 Asistente</button>
             </div>
@@ -299,6 +334,33 @@
             <div class="drawer-content">
                 <!-- TAB: Información -->
                 <div id="tabInfo" class="tab-content active">
+
+                    <!-- Datos de la Empresa (solo lectura) -->
+                    <div style="background: rgba(102,126,234,0.08); border: 1px solid rgba(102,126,234,0.2); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                        <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">📌 Datos de la Empresa</h4>
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <input type="text" id="drawerDireccion" readonly style="background: rgba(255,255,255,0.03); cursor: default;">
+                        </div>
+                        <div class="form-group">
+                            <label>Barrio</label>
+                            <input type="text" id="drawerBarrio" readonly style="background: rgba(255,255,255,0.03); cursor: default;">
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono Empresa</label>
+                            <input type="text" id="drawerTelefonoEmpresa" readonly style="background: rgba(255,255,255,0.03); cursor: default;">
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad de Empleados</label>
+                            <input type="text" id="drawerEmpleados" readonly style="background: rgba(255,255,255,0.03); cursor: default;">
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                            <button id="btnVerMaps" class="btn btn-secondary-small" style="flex:1;" title="Ver en Google Maps">🗺️ Ver en Maps</button>
+                            <button id="btnBuscarEmpleados" class="btn btn-secondary-small" style="flex:1;" title="Buscar empleados en Google">🔍 Buscar Empleados</button>
+                        </div>
+                    </div>
+
+                    <!-- Gestión CRM -->
                     <div class="form-group">
                         <label>Estado</label>
                         <select id="drawerEstado">
@@ -338,12 +400,7 @@
 
                     <div class="form-group">
                         <label>Nombre Contacto</label>
-                        <input type="text" id="drawerNombreContacto">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Teléfono Contacto</label>
-                        <input type="tel" id="drawerTelefono">
+                        <input type="text" id="drawerNombreContacto" placeholder="Nombre de la persona de contacto">
                     </div>
 
                     <div class="form-group">
@@ -372,7 +429,7 @@
                     </div>
 
                     <button id="btnSaveDrawer" class="btn btn-primary btn-block"
-                        title="Guardar cambios en el distribuidor">💾 Guardar</button>
+                        title="Guardar cambios en la empresa">💾 Guardar</button>
                 </div>
 
                 <!-- TAB: Asistente -->
@@ -456,11 +513,11 @@
         </div>
     </div>
 
-    <!-- Modal: Agregar Nuevo Distribuidor -->
+    <!-- Modal: Agregar Nueva Empresa -->
     <div id="addDistributorModal" class="drawer-overlay" style="display:none">
         <div class="drawer" style="max-width: 600px;">
             <div class="drawer-header">
-                <h2>➕ Agregar Nuevo Distribuidor</h2>
+                <h2>➕ Agregar Nueva Empresa</h2>
                 <button id="btnCloseAddModal" class="btn-close" title="Cerrar sin guardar">✕</button>
             </div>
 
@@ -468,73 +525,63 @@
                 <form id="addDistributorForm">
                     <div class="form-group">
                         <label>Nombre *</label>
-                        <input type="text" id="newNombre" required placeholder="Ej: Distribuidora Los Andes"
-                            title="Nombre comercial del distribuidor">
+                        <input type="text" id="newNombre" required placeholder="Ej: Empresa SA"
+                            title="Nombre de la empresa">
                     </div>
 
                     <div class="form-group">
-                        <label>Provincia *</label>
-                        <select id="newProvincia" required title="Seleccionar provincia de Argentina">
-                            <option value="">-- Seleccionar Provincia --</option>
-                            <option value="Buenos Aires">Buenos Aires</option>
-                            <option value="Ciudad Autónoma de Buenos Aires">CABA</option>
-                            <option value="Catamarca">Catamarca</option>
-                            <option value="Chaco">Chaco</option>
-                            <option value="Chubut">Chubut</option>
-                            <option value="Córdoba">Córdoba</option>
-                            <option value="Corrientes">Corrientes</option>
-                            <option value="Entre Ríos">Entre Ríos</option>
-                            <option value="Formosa">Formosa</option>
-                            <option value="Jujuy">Jujuy</option>
-                            <option value="La Pampa">La Pampa</option>
-                            <option value="La Rioja">La Rioja</option>
-                            <option value="Mendoza">Mendoza</option>
-                            <option value="Misiones">Misiones</option>
-                            <option value="Neuquén">Neuquén</option>
-                            <option value="Río Negro">Río Negro</option>
-                            <option value="Salta">Salta</option>
-                            <option value="San Juan">San Juan</option>
-                            <option value="San Luis">San Luis</option>
-                            <option value="Santa Cruz">Santa Cruz</option>
-                            <option value="Santa Fe">Santa Fe</option>
-                            <option value="Santiago del Estero">Santiago del Estero</option>
-                            <option value="Tierra del Fuego">Tierra del Fuego</option>
-                            <option value="Tucumán">Tucumán</option>
-                        </select>
+                        <label>Categoría/Rubro *</label>
+                        <input type="text" id="newCategoria" required placeholder="Ej: Compañía de software"
+                            title="Rubro o categoría de la empresa">
                     </div>
 
                     <div class="form-group">
-                        <label>Ciudad *</label>
-                        <input type="text" id="newCiudad" required placeholder="Ej: Córdoba Capital"
-                            title="Ciudad donde opera el distribuidor">
+                        <label>Dirección</label>
+                        <input type="text" id="newDireccion" placeholder="Ej: Av. Colón 1234"
+                            title="Dirección de la empresa">
                     </div>
 
                     <div class="form-group">
-                        <label>Categoría *</label>
-                        <select id="newCategoria" required title="Tipo de negocio del distribuidor">
-                            <option value="">-- Seleccionar Categoría --</option>
-                            <option value="Distribuidor">Distribuidor</option>
-                            <option value="Mayorista">Mayorista</option>
-                            <option value="Bar">Bar</option>
-                            <option value="Tienda de bebidas">Tienda de bebidas</option>
-                            <option value="Tienda de cerveza">Tienda de cerveza</option>
+                        <label>Barrio</label>
+                        <input type="text" id="newBarrio" placeholder="Ej: CENTRO"
+                            title="Barrio donde está ubicada la empresa">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="newTelefono" placeholder="Ej: 0351 123-4567"
+                            title="Teléfono de la empresa">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Cantidad de Empleados</label>
+                        <select id="newEmpleados" title="Tamaño de la empresa">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="1-10">1-10</option>
+                            <option value="11-50">11-50</option>
+                            <option value="51-200">51-200</option>
+                            <option value="201-500">201-500</option>
+                            <option value="500+">500+</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label>Link Google Maps</label>
                         <input type="url" id="newLinkGoogle" placeholder="https://maps.google.com/..."
-                            title="Link de Google Maps del local (opcional)">
-                        <small style="display:block; margin-top:0.5rem; color:#64748b;">
-                            Opcional: Pegá el link de Google Maps del local
-                        </small>
+                            title="Link de Google Maps (opcional)">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Link Búsqueda Empleados</label>
+                        <input type="url" id="newLinkBusqueda" placeholder="https://www.google.com/search?q=..."
+                            title="Link de búsqueda de empleados (opcional)">
                     </div>
 
                     <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                         <button type="button" id="btnCancelAdd" class="btn btn-secondary" style="flex: 1;"
                             title="Cancelar y cerrar">Cancelar</button>
                         <button type="submit" id="btnSaveNew" class="btn btn-primary" style="flex: 2;"
-                            title="Guardar nuevo distribuidor">💾 Guardar Distribuidor</button>
+                            title="Guardar nueva empresa">💾 Guardar Empresa</button>
                     </div>
                 </form>
             </div>
@@ -544,14 +591,15 @@
     <!-- Input oculto para fallback -->
     <input type="file" id="fileInputFallback" accept=".json" style="display:none;">
 
-    <script src="assets/js/logger.js"></script>
-    <script src="assets/js/api_manager.js?v=100"></script>
-    <script src="assets/js/echarts_premium.js"></script>
-    <script src="assets/js/app_secure.js"></script>
-    <script src="assets/js/analisis_mercado.js"></script>
-    <script src="assets/js/add_distributor.js"></script>
-    <script src="assets/js/api_settings.js?v=100"></script>
-    <script src="assets/js/auth.js?v=100"></script>
+    <script src="assets/js/logger.js?v=105"></script>
+    <script src="APIS/api_manager.js?v=105"></script>
+    <script src="assets/js/echarts_premium.js?v=105"></script>
+    <script src="assets/js/app_secure.js?v=105"></script>
+    <script src="assets/js/analisis_mercado.js?v=105"></script>
+    <script src="assets/js/add_distributor.js?v=105"></script>
+    <script src="APIS/api_settings.js?v=105"></script>
+    <script src="usuarios/auth_local.js?v=105"></script>
+    <script src="assets/js/auth.js?v=105"></script>
 
     <!-- Botón Flotante de Configuración - Siempre visible -->
     <button id="btnSettings" class="btn-settings-floating" title="Configuración de API Keys">⚙️</button>

@@ -133,7 +133,7 @@ function renderChartEmbudo(data) {
 }
 
 // ============================================
-// BAR CHART - DISTRIBUCIÓN POR PROVINCIAS
+// BAR CHART - DISTRIBUCIÓN POR BARRIOS
 // ============================================
 
 function renderChartProvincias(data) {
@@ -145,15 +145,15 @@ function renderChartProvincias(data) {
 
     const myChart = echarts.init(chartDom);
 
-    // Contar por provincia
-    const provinciasMap = {};
+    // Contar por barrio
+    const barriosMap = {};
     data.forEach(d => {
-        const prov = d.provincia || 'Sin provincia';
-        provinciasMap[prov] = (provinciasMap[prov] || 0) + 1;
+        const barrio = d.barrio || d['Barrio'] || 'Sin barrio';
+        barriosMap[barrio] = (barriosMap[barrio] || 0) + 1;
     });
 
-    // Top 10 provincias
-    const sorted = Object.entries(provinciasMap)
+    // Top 10 barrios
+    const sorted = Object.entries(barriosMap)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
 
@@ -162,7 +162,7 @@ function renderChartProvincias(data) {
 
     const option = {
         title: {
-            text: 'Top 10 Provincias',
+            text: 'Top 10 Barrios',
             left: 'center',
             textStyle: {
                 color: '#f1f5f9',
@@ -217,7 +217,7 @@ function renderChartProvincias(data) {
         },
         series: [
             {
-                name: 'Distribuidores',
+                name: 'Empresas',
                 type: 'bar',
                 data: valores,
                 itemStyle: {
@@ -252,7 +252,7 @@ function renderChartProvincias(data) {
         myChart.resize();
     });
 
-    console.log('✅ Chart Provincias renderizado');
+    console.log('✅ Chart Barrios renderizado');
 }
 
 // ============================================
@@ -440,7 +440,7 @@ function renderChartResponsables(data) {
         },
         series: [
             {
-                name: 'Clientes asignados',
+                name: 'Empresas asignadas',
                 type: 'bar',
                 data: valores,
                 itemStyle: {
