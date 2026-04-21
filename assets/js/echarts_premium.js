@@ -28,7 +28,7 @@ function renderChartEmbudo(data) {
         return;
     }
 
-    const myChart = echarts.init(chartDom);
+    const myChart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
 
     // Contar por etapa del pipeline
     const etapas = {
@@ -143,7 +143,7 @@ function renderChartProvincias(data) {
         return;
     }
 
-    const myChart = echarts.init(chartDom);
+    const myChart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
 
     // Contar por barrio
     const barriosMap = {};
@@ -266,7 +266,7 @@ function renderChartCategorias(data) {
         return;
     }
 
-    const myChart = echarts.init(chartDom);
+    const myChart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
 
     // Contar por categoría
     const categoriasMap = {};
@@ -368,7 +368,7 @@ function renderChartResponsables(data) {
         return;
     }
 
-    const myChart = echarts.init(chartDom);
+    const myChart = echarts.getInstanceByDom(chartDom) || echarts.init(chartDom);
 
     // Contar por responsable
     const responsablesMap = {};

@@ -10,22 +10,18 @@
     const userField = document.getElementById('loginUser');
     const passField = document.getElementById('loginPass');
 
-    // MODO LOCAL: Si Firebase no está activo, usamos esta lógica
-    if (window.CRM_IS_CLOUD_ACTIVE) {
-        console.log('☁️ Auth: Cloud detected, skipping local auth initialization.');
-        return;
-    }
+    console.log(window.CRM_IS_CLOUD_ACTIVE ? '☁️ Auth: Cloud mode + Login Local.' : '🔓 Auth: Local Mode active.');
 
-    console.log('🔓 Auth: Local Mode active.');
-
-    // Desbloquear si ya hay sesión local en localStorage
+    // Desbloquear si ya hay sesión guardada
     if (localStorage.getItem('crm_local_session') === 'true') {
         unlockApp();
     }
 
     // Credenciales locales (modificar acá para cambiarlas)
     const LOCAL_USERS = [
-        { id: 'Jose', user: 'checa@crm.com', pass: '123456789' }
+        { id: 'Milton', user: 'Milton', pass: 'checabar' },
+        { id: 'Juancho', user: 'Juancho', pass: 'checabar' },
+        { id: 'Jose', user: 'Jose', pass: 'checabar' }
     ];
 
     form.addEventListener('submit', (e) => {
@@ -53,18 +49,19 @@
         if (overlay) {
             overlay.style.opacity = '0';
             overlay.style.transition = 'opacity 0.5s ease';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 500);
+            setTimeout(() => { overlay.style.display = 'none'; }, 500);
         }
         document.body.classList.remove('not-logged-in');
 
-        // Log de depuración
-        console.log('🔓 unlockApp: Quitando overlay. baseLoaded:', typeof baseLoaded !== 'undefined' ? baseLoaded : 'unknown');
-
-        // Si existe la función global onBaseLoaded, llamarla (ella verificará si hay datos)
-        if (typeof onBaseLoaded === 'function') {
-            onBaseLoaded();
+        // Si hay cloud activo, cargar desde Firestore
+        if (window.CRM_IS_CLOUD_ACTIVE) {
+            if (typeof startRealtimeSync === 'function') {
+                startRealtimeSync();
+            }
+        } else {
+            if (typeof onBaseLoaded === 'function') {
+                onBaseLoaded();
+            }
         }
     }
 

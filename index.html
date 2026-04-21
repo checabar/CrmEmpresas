@@ -106,12 +106,12 @@
     </div>
 
     <!-- Barra Superior -->
-    <header class="header" style="background: url('image/checa_imagen.jpg') center/cover no-repeat; position:relative;">
-        <div style="position:absolute; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(2px);"></div>
+    <header class="header" style="background: url('image/ingreso.jpg') center/cover no-repeat; position:relative;">
+        <div style="position:absolute; inset:0; background:rgba(15,23,42,0.72); backdrop-filter:blur(2px);"></div>
         <div class="header-content" style="position:relative; z-index:1;">
             <div class="header-left">
                 <div class="header-logo">
-                    <img src="image/favicon.svg" alt="Logo">
+                    <img src="image/logo.png" alt="Checa Bar" style="height:48px; width:auto; object-fit:contain;">
                     <div class="logo-text">
                         <h1 id="brandName">CRM Empresas</h1>
                         <span id="activeCollectionName" style="display:none"></span>
@@ -391,10 +391,7 @@
                         <select id="drawerResponsable">
                             <option value="">Sin asignar</option>
                             <option value="Juan Cruz">Juan Cruz</option>
-                            <option value="Franco">Franco</option>
-                            <option value="Pablo">Pablo</option>
-                            <option value="Santiago">Santiago</option>
-                            <option value="Mai">Mai</option>
+                            <option value="Milton">Milton</option>
                         </select>
                     </div>
 
@@ -426,6 +423,32 @@
                     <div class="form-group">
                         <label>Notas Comerciales</label>
                         <textarea id="drawerNotas" rows="6"></textarea>
+                    </div>
+
+                    <!-- Log de Interacciones -->
+                    <div class="asistente-section" style="margin-top: 1rem;">
+                        <h3>📋 Log de Interacciones</h3>
+                        <div id="logContainer" class="log-container"></div>
+                        <div class="log-form">
+                            <h4>Agregar Evento</h4>
+                            <select id="logTipo">
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="email">Email</option>
+                                <option value="llamada">Llamada</option>
+                                <option value="visita">Visita</option>
+                            </select>
+                            <select id="logResultado">
+                                <option value="sin_respuesta">Sin respuesta</option>
+                                <option value="interesado">Interesado</option>
+                                <option value="pide_precio">Pide precio</option>
+                                <option value="no_interesa">No le interesa</option>
+                                <option value="seguir_contacto">Seguir contacto</option>
+                                <option value="cierre">Cierre</option>
+                            </select>
+                            <textarea id="logNotas" rows="3" placeholder="Notas del evento..."></textarea>
+                            <button id="btnAddLog" class="btn btn-primary"
+                                title="Registrar nueva interacción">➕ Agregar al Log</button>
+                        </div>
                     </div>
 
                     <button id="btnSaveDrawer" class="btn btn-primary btn-block"
@@ -483,31 +506,6 @@
                         </div>
                     </div>
 
-                    <div class="asistente-section">
-                        <h3>Log de Interacciones</h3>
-                        <div id="logContainer" class="log-container"></div>
-
-                        <div class="log-form">
-                            <h4>Agregar Evento</h4>
-                            <select id="logTipo">
-                                <option value="whatsapp">WhatsApp</option>
-                                <option value="email">Email</option>
-                                <option value="llamada">Llamada</option>
-                                <option value="visita">Visita</option>
-                            </select>
-                            <select id="logResultado">
-                                <option value="sin_respuesta">Sin respuesta</option>
-                                <option value="interesado">Interesado</option>
-                                <option value="pide_precio">Pide precio</option>
-                                <option value="no_interesa">No le interesa</option>
-                                <option value="seguir_contacto">Seguir contacto</option>
-                                <option value="cierre">Cierre</option>
-                            </select>
-                            <textarea id="logNotas" rows="3" placeholder="Notas del evento..."></textarea>
-                            <button id="btnAddLog" class="btn btn-primary"
-                                title="Registrar nueva interacción con el distribuidor">➕ Agregar al Log</button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -592,12 +590,12 @@
     <input type="file" id="fileInputFallback" accept=".json" style="display:none;">
 
     <script src="assets/js/logger.js?v=105"></script>
-    <script src="APIS/api_manager.js?v=105"></script>
+    <script src="apis/api_manager.js?v=105"></script>
     <script src="assets/js/echarts_premium.js?v=105"></script>
     <script src="assets/js/app_secure.js?v=105"></script>
     <script src="assets/js/analisis_mercado.js?v=105"></script>
     <script src="assets/js/add_distributor.js?v=105"></script>
-    <script src="APIS/api_settings.js?v=105"></script>
+    <script src="apis/api_settings.js?v=105"></script>
     <script src="usuarios/auth_local.js?v=105"></script>
     <script src="assets/js/auth.js?v=105"></script>
 

@@ -1,6 +1,11 @@
 # Logs del sistema
 logs/
 
+# Base de datos local (NO SUBIR A REPO PÚBLICO)
+data/*.json
+data/*.xlsx
+data/*.xls
+
 # Caché de barrios y geocodificación (generado localmente)
 data/cache_barrios/
 

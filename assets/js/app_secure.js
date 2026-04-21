@@ -16,7 +16,7 @@ let baseLoaded = false;
 const CURRENT_COLLECTION = CRM_CONFIG.COLLECTION_NAME;
 
 // Lista fija de responsables comerciales
-const RESPONSABLES = ['Juan Cruz', 'Franco', 'Pablo', 'Santiago', 'Mai'];
+const RESPONSABLES = ['Milton', 'Juan Cruz'];
 
 // ============================================
 // INICIALIZACIÓN (FIREBASE)
@@ -30,28 +30,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         setupEventListeners();
 
-        // Si Cloud está activo, escuchar cambios. Si no, arrancar modo local.
-        if (window.CRM_IS_CLOUD_ACTIVE) {
-            console.log('☁️ Cloud detectado, configurando Auth...');
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    console.log('👤 Usuario autenticado, iniciando escucha de Firestore...');
-                    startRealtimeSync();
-                } else {
-                    console.log('🚪 Usuario deslogueado, deteniendo sincronización.');
-                    if (firestoreUnsubscribe) {
-                        firestoreUnsubscribe();
-                        firestoreUnsubscribe = null;
-                    }
-                    allData = [];
-                    renderTable();
-                    updateDashboard();
-                }
-            });
-        } else {
+        // Si Cloud está activo, el sync lo dispara auth_local.js al hacer login.
+        // Si no, arrancar modo local buscando el archivo de data/
+        if (!window.CRM_IS_CLOUD_ACTIVE) {
             console.log('📂 Arrancando en Modo Local (Cloud desactivado)...');
-            // En modo local, buscamos directamente el archivo de data/
             checkLocalFileForMigration();
+        } else {
+            console.log('☁️ Cloud activo, esperando login local para sincronizar...');
         }
 
         window.addEventListener('beforeunload', (e) => {

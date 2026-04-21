@@ -102,7 +102,7 @@ async function buscarConSerper(dist, serperKey) {
 
     const queries = [
         `"${nombre}" ${ciudad} ${provincia}`,
-        `${nombre} ${ciudad} distribuidor bebidas cerveza`,
+        `${nombre} ${ciudad} empresa empleados convenios beneficios`,
     ];
 
     let allResults = [];
@@ -180,7 +180,7 @@ async function buscarConProxy(dist) {
 
     const queries = [
         `"${nombre}" ${ciudad} ${provincia}`,
-        `${nombre} ${ciudad} distribuidor bebidas cerveza`,
+        `${nombre} ${ciudad} empresa empleados convenios beneficios`,
     ];
 
     let allResults = [];
@@ -241,13 +241,13 @@ async function buscarConOpenAIWebSearch(dist, openaiKey) {
             body: JSON.stringify({
                 model: 'gpt-4o-mini',
                 tools: [{ type: 'web_search_preview' }],
-                input: `Buscá información pública sobre el siguiente distribuidor de bebidas/cerveza en Argentina. 
-Necesito datos verificables: qué vende, dónde está, teléfono, email, web, redes sociales, reseñas, competencia.
+                input: `Buscá información pública sobre la siguiente empresa en Córdoba, Argentina.
+Contexto: Checa Bar quiere ofrecerle sus servicios (convenios corporativos, eventos, beneficios para empleados).
+Necesito datos verificables: qué hace la empresa, cuántos empleados tiene, dónde está, web, redes sociales, reseñas, quién la dirige.
 NO inventes datos. Solo reportá lo que encuentres.
 
-Distribuidor: ${nombre}
-Ciudad: ${ciudad}
-Provincia: ${provincia}  
+Empresa: ${nombre}
+Barrio/Zona: ${ciudad}
 Categoría: ${categoria}
 
 Respondé con un listado estructurado de TODOS los datos que encontraste, indicando la fuente/URL de cada dato.
@@ -356,20 +356,21 @@ async function buscarConOpenAIChatFallback(dist, openaiKey) {
                 messages: [
                     {
                         role: 'system',
-                        content: `Sos un investigador de mercado. Te dan el nombre de un distribuidor de bebidas en Argentina.
+                        content: `Sos un investigador de mercado. Te dan el nombre de una empresa en Córdoba, Argentina.
+Contexto: Checa Bar quiere ofrecerle convenios corporativos y servicios de bar a sus empleados.
 Respondé SOLO con información que conozcas. NO inventes datos.
-Si no conocés al distribuidor, decilo claramente.
+Si no conocés la empresa, decilo claramente.
 Formato: listado de datos encontrados con nivel de confianza (alto/medio/bajo).`
                     },
                     {
                         role: 'user',
-                        content: `¿Qué sabés sobre este distribuidor?
+                        content: `¿Qué sabés sobre esta empresa?
 Nombre: ${nombre}
-Ciudad: ${ciudad}, ${provincia}
+Barrio/Zona: ${ciudad}, ${provincia}
 Categoría: ${categoria}
 Link Google Maps: ${dist.link_google || 'No disponible'}
 
-Listá todo lo que sepas: tipo de negocio, productos, contacto, tamaño, reputación.`
+Listá todo lo que sepas: qué hace, cuántos empleados tiene, contacto, tamaño, reputación.`
                     }
                 ],
                 temperature: 0.3,
@@ -442,20 +443,21 @@ async function generarAnalisisConResearch(dist, research) {
         }).join('\n\n');
     }
 
-    const systemPrompt = `Rol: Sos un analista de mercado especializado en distribución de bebidas y cerveza en Argentina.
-Objetivo: Construir un diagnóstico profundo del distribuidor basado SOLO en la información encontrada en la investigación web que te paso abajo.
+    const systemPrompt = `Rol: Sos un analista comercial que trabaja para Checa Bar, un bar en Córdoba, Argentina.
+Objetivo: Construir un diagnóstico profundo de una empresa a la que Checa Bar quiere ofrecerle sus servicios: convenios corporativos, eventos de empresa, descuentos para empleados, salidas grupales y beneficios para el staff.
+Analizá SOLO con la información encontrada en la investigación web que te paso abajo.
 
 REGLAS ESTRICTAS:
 1. NO inventes información. Si algo NO está respaldado por los resultados de búsqueda, indicá "No verificado".
 2. Separá claramente "Hechos verificables" de "Interpretaciones" en cada sección.
 3. Agregá "Fuentes:" con los links relevantes al final de cada sección donde uses datos.
-4. NO hagas estrategia comercial, ni sugerencias de venta, ni recomendaciones de productos.
+4. NO hagas estrategia comercial en esta sección, eso va aparte.
 5. Si la búsqueda no trajo resultados útiles, decilo honestamente.
 
 FORMATO DE SALIDA (Markdown):
 
-## A) Resumen del Distribuidor
-Breve perfil: tamaño estimado, tipo, antigüedad, nivel de profesionalización.
+## A) Resumen de la Empresa
+Breve perfil: rubro, tamaño estimado, antigüedad, nivel de profesionalización.
 
 ## B) Información Verificable
 **Hechos:**
@@ -470,36 +472,38 @@ Breve perfil: tamaño estimado, tipo, antigüedad, nivel de profesionalización.
 **Interpretaciones:**
 **Fuentes:** [links]
 
-## D) Portafolio y Posicionamiento
+## D) Actividad y Cultura de la Empresa
 **Hechos:**
-(marcas que distribuye, tipo de productos, segmento)
+(eventos internos, beneficios para empleados, cultura organizacional observable)
 **Interpretaciones:**
 **Fuentes:** [links]
 
-## E) Tipo de Cliente del Distribuidor
+## E) Perfil de sus Empleados
 **Hechos:**
-(a quién le vende: bares, restaurantes, vinotecas, kioscos, etc.)
+(cantidad estimada, perfil profesional, rango etario si se puede inferir)
 **Interpretaciones:**
+(¿son el tipo de personas que podrían frecuentar un bar como Checa?)
 **Fuentes:** [links]
 
-## F) Fortalezas Observables
-(solo basadas en evidencia encontrada)
+## F) Potencial como Cliente de Checa Bar
+(solo basado en evidencia encontrada: tamaño, cultura, ubicación, perfil)
 
-## G) Debilidades / Riesgos Observables
-(solo basadas en evidencia encontrada)
+## G) Posibles Obstáculos
+(solo basados en evidencia encontrada)
 
 ## H) Información Faltante Clave
-- Qué datos faltan para evaluarlo mejor
-- Qué habría que validar en una reunión o llamada`;
+- Qué datos faltan para evaluar mejor la oportunidad
+- Qué habría que validar en un primer contacto`;
 
-    const userPrompt = `DATOS DEL DISTRIBUIDOR EN EL CRM:
+    const userPrompt = `DATOS DE LA EMPRESA EN EL CRM:
 - Nombre: ${dist.nombre}
-- Ubicación: ${dist.ciudad}, ${dist.provincia}
+- Barrio: ${dist.barrio || 'No especificado'}
+- Dirección: ${dist.direccion || 'No especificada'}
 - Categoría: ${dist.categoria || 'No especificada'}
-- Puntaje CRM: ${dist.puntaje || 'N/A'}/10
+- Cantidad de Empleados: ${dist.cantidad_empleados || 'No especificada'}
+- Teléfono Empresa: ${dist.telefono_empresa || 'No disponible'}
 - Contacto: ${dist.nombre_contacto || 'Desconocido'}
-- Teléfono: ${dist.telefono || dist.telefono_contacto || 'No disponible'}
-- Email: ${dist.email || dist.email_contacto || 'No disponible'}
+- Email: ${dist.email_contacto || 'No disponible'}
 - Link Google: ${dist.link_google || 'No disponible'}
 
 ═══════════════════════════════════════════
@@ -594,7 +598,9 @@ async function analizarDistribuidorProfundo() {
         const updateData = { analisis: dist.analisis };
         if (research) updateData.research = research;
 
-        await db.collection('distribuidores').doc(dist.id).update(updateData);
+        if (db) {
+            await db.collection('distribuidores').doc(dist.id).update(updateData);
+        }
 
         // PASO 4: Mostrar
         mostrarAnalisisMarkdown(dist, false);
@@ -639,7 +645,7 @@ async function actualizarResearch() {
 
         if (research) {
             dist.research = research;
-            await db.collection(CURRENT_COLLECTION).doc(dist.id).update({ research: research });
+            if (db) await db.collection(CURRENT_COLLECTION).doc(dist.id).update({ research: research });
             const metodo = research.results[0]?.source || 'desconocido';
             alert(`✅ Búsqueda actualizada:\n• ${research.result_count} resultados encontrados\n• Método: ${metodo}\n\nAhora podés regenerar el análisis con la nueva información.`);
             mostrarResearchBadge(dist);
@@ -874,41 +880,39 @@ async function generarEstrategiaConIA(dist, apiKey) {
     const historial = dist.historial_contactos || [];
     const ultimosLogs = historial.slice(0, 10);
 
-    const systemPrompt = `Rol: Sos un gerente comercial senior de Checa, marca de cerveza artesanal argentina.
+    const systemPrompt = `Rol: Sos un gerente comercial de Checa Bar, un bar en Córdoba, Argentina.
+Checa Bar ofrece a empresas: convenios corporativos con descuentos para empleados, eventos privados de empresa, salidas grupales, almuerzos de trabajo y beneficios para el staff.
 
-${CHECA_PRODUCTOS}
-
-Tu trabajo: diseñar estrategia comercial para desarrollar este distribuidor, basándote en el análisis previo y los logs comerciales.
+Tu trabajo: diseñar una estrategia para acercarte a esta empresa y ofrecerle los servicios de Checa Bar, basándote en el análisis previo y el historial de contactos.
 
 Reglas:
 1. Basate SIEMPRE en información existente (análisis + logs).
 2. Si hay info nueva en los logs, actualizá la estrategia.
-3. Sé concreto, no genérico.
+3. Sé concreto y accionable, no genérico.
+4. Pensá en qué servicio de Checa Bar encaja mejor con el perfil de esta empresa.
 
 Formato:
 
 A) SITUACIÓN ACTUAL
-- Estado relación (prospecto/negociación/prueba/activo/riesgo)
-- Nivel interés estimado (0–100)
-- Oportunidades detectadas
+- Factores de encaje con Checa Bar (por qué esta empresa es un buen prospecto)
+- Oportunidades concretas detectadas según el perfil de la empresa
+- Posibles obstáculos o puntos débiles del prospecto
 
-B) ESTRATEGIA RECOMENDADA
-- Objetivo comercial
-- Productos prioritarios (de las 10 variedades Checa)
-- Argumentos comerciales principales
-- Riesgos a evitar
+B) PROPUESTA DE VALOR RECOMENDADA
+- Qué servicio/convenio de Checa Bar encaja mejor con esta empresa
+- Argumentos principales para el primer contacto
+- Ángulo de entrada (ej: beneficios para empleados, evento de fin de año, etc.)
 
 C) PRÓXIMA ACCIÓN
 - Qué hacer en el próximo contacto
+- Qué canal usar (llamada, WhatsApp, visita, email)
 - Qué NO hacer todavía
 
-D) AJUSTES RESPECTO A ESTRATEGIA ANTERIOR
-- Qué cambió según nuevos datos/logs
+D) SEÑALES A OBSERVAR
+- Indicadores de que la empresa es una buena oportunidad
+- Señales de que no vale la pena seguir`;
 
-E) SEÑALES A OBSERVAR
-- Indicadores de avance o fracaso`;
-
-    const userPrompt = `ANÁLISIS DEL DISTRIBUIDOR:
+    const userPrompt = `ANÁLISIS DE LA EMPRESA:
 ${analisisTexto}
 
 ESTADO EN CRM:
@@ -916,6 +920,8 @@ ESTADO EN CRM:
 - Estado: ${dist.estado || 'pendiente'}
 - Probabilidad: ${dist.probabilidad || 0}%
 - Responsable: ${dist.responsable_comercial || 'Sin asignar'}
+- Cantidad de Empleados: ${dist.cantidad_empleados || 'No especificada'}
+- Categoría: ${dist.categoria || 'No especificada'}
 
 NOTAS: ${dist.notas_comerciales || 'Sin notas'}
 
@@ -924,9 +930,9 @@ ${ultimosLogs.length > 0
             ? ultimosLogs.map(log => `- [${log.fecha ? new Date(log.fecha).toLocaleDateString('es-AR') : '?'}] ${log.tipo}: ${log.resultado} ${log.notas ? '| ' + log.notas : ''}`).join('\n')
             : 'Sin interacciones registradas'}
 
-PRÓXIMA ACCIÓN: ${dist.proxima_accion || 'No definida'}
+PRÓXIMA ACCIÓN PLANIFICADA: ${dist.proxima_accion || 'No definida'}
 
-Generá la estrategia comercial.`;
+Generá la estrategia comercial para Checa Bar.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',

@@ -8,18 +8,18 @@ const CRM_CONFIG = {
     BRAND_NAME: "Checa Bar - Convenios Con Empresas",
 
     // Nombre de la colección en Firestore (Base de Datos)
-    COLLECTION_NAME: "",
+    COLLECTION_NAME: "empresas",
 
     // Nombre del archivo local en carpeta data/ para migración inicial (JSON o Excel)
-    DB_FILE: "Checabar_db.xlsx",
+    DB_FILE: "Checabar_db.json",
 
-    // Configuración de Firebase - Dejar vacío para "Modo Local" inicial
+    // Configuración de Firebase
     FIREBASE: {
-        projectId: "",
-        appId: "",
-        storageBucket: "",
-        apiKey: "",
-        authDomain: "",
-        messagingSenderId: ""
+        apiKey: "AIzaSyAWmFfxCGCEPhBn-I9MHsBrR1AWe1y2hqU",
+        authDomain: "checabar-crm-empresas.firebaseapp.com",
+        projectId: "checabar-crm-empresas",
+        storageBucket: "checabar-crm-empresas.firebasestorage.app",
+        messagingSenderId: "548624675493",
+        appId: "1:548624675493:web:7feb3d8b8789d2621a534c"
     }
 };
