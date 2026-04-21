@@ -12,10 +12,23 @@
 
     console.log(window.CRM_IS_CLOUD_ACTIVE ? '☁️ Auth: Cloud mode + Login Local.' : '🔓 Auth: Local Mode active.');
 
-    // Desbloquear si ya hay sesión guardada
-    if (localStorage.getItem('crm_local_session') === 'true') {
-        unlockApp();
-    }
+    // Desbloquear si ya hay sesión guardada (esperar a que el DOM esté listo)
+    window.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('crm_local_session') === 'true') {
+            console.log('🔄 Sesión persistente detectada. Desbloqueando...');
+            unlockApp();
+        }
+    });
+
+    // Botón de Cerrar Sesión
+    document.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'btnLogout') {
+            if (confirm('¿Querés cerrar sesión?')) {
+                localStorage.removeItem('crm_local_session');
+                location.reload();
+            }
+        }
+    });
 
     // Credenciales locales (modificar acá para cambiarlas)
     const LOCAL_USERS = [
