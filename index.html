@@ -24,14 +24,7 @@
     <link rel="stylesheet" href="assets/css/login.css">
     <link rel="stylesheet" href="assets/css/settings.css?v=10">
     <style>
-        /* Seguridad Crítica: Ocultar todo si no hay sesión */
-        body.not-logged-in #mainContent,
-        body.not-logged-in .header,
-        body.not-logged-in .welcome-screen {
-            display: none !important;
-        }
-
-        /* Asegurar que el overlay se vea aunque falle el CSS externo */
+        /* El overlay de login ahora solo se muestra si el body tiene la clase */
         .login-overlay {
             display: none;
             position: fixed;
@@ -42,8 +35,14 @@
             align-items: center;
         }
 
-        body.not-logged-in .login-overlay {
+        body.show-login .login-overlay {
             display: flex !important;
+        }
+
+        /* Ocultar contenido solo si se pide explícitamente */
+        body.show-login #mainContent,
+        body.show-login .header {
+            display: none !important;
         }
     </style>
     <!-- Firebase SDK (v8 Compatibility) -->
@@ -81,7 +80,7 @@
     </script>
 </head>
 
-<body class="not-logged-in">
+<body>
     <!-- Login Overlay -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-card">

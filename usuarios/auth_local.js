@@ -10,15 +10,16 @@
     const userField = document.getElementById('loginUser');
     const passField = document.getElementById('loginPass');
 
-    console.log(window.CRM_IS_CLOUD_ACTIVE ? '☁️ Auth: Cloud mode + Login Local.' : '🔓 Auth: Local Mode active.');
+    // Verificación de sesión INMEDIATA
+    const hasSession = localStorage.getItem('crm_local_session') === 'true';
 
-    // Desbloquear si ya hay sesión guardada (esperar a que el DOM esté listo)
-    window.addEventListener('DOMContentLoaded', () => {
-        if (localStorage.getItem('crm_local_session') === 'true') {
-            console.log('🔄 Sesión persistente detectada. Desbloqueando...');
-            unlockApp();
-        }
-    });
+    if (!hasSession) {
+        document.body.classList.add('show-login');
+        console.log('🔒 Sin sesión. Mostrando login...');
+    } else {
+        console.log('🔄 Sesión activa detectada. Saltando login.');
+        unlockApp();
+    }
 
     // Botón de Cerrar Sesión
     document.addEventListener('click', (e) => {
@@ -60,11 +61,10 @@
 
     function unlockApp() {
         if (overlay) {
-            overlay.style.opacity = '0';
-            overlay.style.transition = 'opacity 0.5s ease';
-            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+            overlay.style.display = 'none';
         }
-        document.body.classList.remove('not-logged-in');
+        document.body.classList.remove('show-login');
+        document.body.classList.remove('not-logged-in'); // Limpieza por compatibilidad
 
         // Si hay cloud activo, cargar desde Firestore
         if (window.CRM_IS_CLOUD_ACTIVE) {
