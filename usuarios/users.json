@@ -1,0 +1,10 @@
+{
+  "users": [
+    {
+      "localId": "Jose",
+      "email": "checa@crm.com",
+      "passwordHash": "123456789",
+      "salt": "checa_salt"
+    }
+  ]
+}

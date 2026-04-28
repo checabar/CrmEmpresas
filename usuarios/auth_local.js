@@ -35,7 +35,8 @@
     const LOCAL_USERS = [
         { id: 'Milton', user: 'Milton', pass: 'checabar' },
         { id: 'Juancho', user: 'Juancho', pass: 'checabar' },
-        { id: 'Jose', user: 'Jose', pass: 'checabar' }
+        { id: 'Jose', user: 'Jose', pass: 'checabar' },
+        { id: 'Gabriel', user: 'Gabriel', pass: 'checabar' }
     ];
 
     form.addEventListener('submit', (e) => {
