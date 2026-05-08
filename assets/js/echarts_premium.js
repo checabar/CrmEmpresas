@@ -183,20 +183,22 @@ function renderChartProvincias(data) {
             }
         },
         grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '3%',
-            top: 60,
+            left: 10,
+            right: 10,
+            bottom: 90,
+            top: 50,
             containLabel: true
         },
         xAxis: {
             type: 'category',
             data: provincias,
             axisLabel: {
-                rotate: 45,
+                rotate: 60,
                 interval: 0,
-                fontSize: 11,
-                color: '#cbd5e1'
+                fontSize: 10,
+                color: '#cbd5e1',
+                overflow: 'truncate',
+                width: 80
             },
             axisLine: {
                 lineStyle: {
@@ -239,7 +241,7 @@ function renderChartProvincias(data) {
                     show: true,
                     position: 'top',
                     color: '#ffffff',
-                    fontSize: 13,
+                    fontSize: 11,
                     fontWeight: 'bold'
                 }
             }
