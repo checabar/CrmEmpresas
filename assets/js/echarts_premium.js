@@ -124,7 +124,10 @@ function renderChartEmbudo(data) {
     };
 
     myChart.setOption(option);
-    myChart.resize();
+
+    window.addEventListener('resize', () => {
+        myChart.resize();
+    });
 
     console.log('✅ Chart Embudo renderizado');
 }
@@ -244,7 +247,10 @@ function renderChartProvincias(data) {
     };
 
     myChart.setOption(option);
-    myChart.resize();
+
+    window.addEventListener('resize', () => {
+        myChart.resize();
+    });
 
     console.log('✅ Chart Barrios renderizado');
 }
@@ -343,7 +349,10 @@ function renderChartCategorias(data) {
     };
 
     myChart.setOption(option);
-    myChart.resize();
+
+    window.addEventListener('resize', () => {
+        myChart.resize();
+    });
 
     console.log('✅ Chart Categorías renderizado (sin leyenda)');
 }
@@ -461,7 +470,10 @@ function renderChartResponsables(data) {
     };
 
     myChart.setOption(option);
-    myChart.resize();
+
+    window.addEventListener('resize', () => {
+        myChart.resize();
+    });
 
     console.log('✅ Chart Responsables renderizado');
 }

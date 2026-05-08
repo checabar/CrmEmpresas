@@ -1,0 +1,422 @@
+{
+  "street::AV LA VOZ DEL INTERIOR 8851 EDIFICIO 2": {
+    "barrio": "AEROPUERTO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=8510"
+  },
+  "street::AV CIUDAD DE VALPARAISO 3540": {
+    "barrio": "CIUDAD UNIVERSITARIA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::BERNARDO O HIGGINS 6100": {
+    "barrio": "VILLA EUCARISTICA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=6230"
+  },
+  "street::ARTURO ORGAZ": {
+    "barrio": "ALBERDI",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::HUMBERTO 1 945 PISO 7 OFICINA B": {
+    "barrio": "ALBERDI",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=680"
+  },
+  "street::BUENOS AIRES 197": {
+    "barrio": "NUEVA CORDOBA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::AV AMADEO SABATTINI 5161": {
+    "barrio": "DEAN FUNES",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=5161"
+  },
+  "street::AV EMILIO CARAFFA 2620": {
+    "barrio": "VILLA CABRERA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::AV HAYA DE LA TORRE": {
+    "barrio": "CIUDAD UNIVERSITARIA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::SANTA ROSA 320 6 B": {
+    "barrio": "ALTO ALBERDI",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=3312"
+  },
+  "street::AV LA VOZ DEL INTERIOR 8851": {
+    "barrio": "AEROPUERTO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=8510"
+  },
+  "street::GRAL MANUEL SAVIO 5560": {
+    "barrio": "JOSE IGNACIO RUCCI",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=5550"
+  },
+  "street::C PUBLICA 18 4235": {
+    "barrio": "0",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::AV CONCEPCION ARENAL 690": {
+    "barrio": "PARQUE SARMIENTO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=770"
+  },
+  "street::AV DE CIRCUNVALACION AGUSTIN TOSCO 5000": {
+    "barrio": "0",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::PIERO ASTORI 1300": {
+    "barrio": "PALMAR",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=1461"
+  },
+  "street::BV JUAN DOMINGO PERON 380": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::DE LOS ALMOGAVARES 5022": {
+    "barrio": "LOS BOULEVARES",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::AV CASTRO BARROS 1675": {
+    "barrio": "VILLA CABRERA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=1660"
+  },
+  "street::AV AMADEO SABATTINI 4260": {
+    "barrio": "Empalme",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=4295"
+  },
+  "street::AV FUERZA AEREA ARGENTINA 4900": {
+    "barrio": "RESIDENCIAL SAN ROQUE",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=4894"
+  },
+  "street::AV FUERZA AEREA ARGENTINA 1964": {
+    "barrio": "PARQUE CAPITAL",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=2009"
+  },
+  "street::CATAMARCA CENTRO 50": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::PASAJE EMILIO HUESPE 187": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::AV CIUDAD DE VALPARAISO 3342": {
+    "barrio": "CIUDAD UNIVERSITARIA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::BUENOS AIRES CENTRO 370": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::AV FUERZA AEREA ARGENTINA 2135": {
+    "barrio": "PARQUE CAPITAL",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=2129"
+  },
+  "street::PASAJE EMILIO HUESPE 130": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::AV FUERZA AEREA ARGENTINA 2080": {
+    "barrio": "PARQUE CAPITAL",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=2083"
+  },
+  "street::JULIO A ROCA 875": {
+    "barrio": "BELLA VISTA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=869"
+  },
+  "street::AV J M DE PUEYRREDON 652": {
+    "barrio": "0",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::PASAJE JUAN ALBA POSSE 5854": {
+    "barrio": "GRANJA DE FUNES",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": null
+  },
+  "street::AV ARMADA ARGENTINA 3555": {
+    "barrio": "PARQUE FUTURA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=3608"
+  },
+  "street::AV VELEZ SARSFIELD 1611": {
+    "barrio": "NUEVA CORDOBA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=1271"
+  },
+  "street::AV CONCEPCION ARENAL 1177": {
+    "barrio": "ROGELIO MARTINEZ",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=1174"
+  },
+  "street::AV CONCEPCION ARENAL 54": {
+    "barrio": "PARQUE SARMIENTO",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=770"
+  },
+  "street::ROSARIO DE SANTA FE 650": {
+    "barrio": "GENERAL PAZ",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=743"
+  },
+  "street::AV MARCELO T DE ALVEAR 120 9 PISO": {
+    "barrio": "BELLA VISTA",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=1484"
+  },
+  "street::AV LA VOZ DEL INTERIOR 7000": {
+    "barrio": "LOS BOULEVARES",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=6997"
+  },
+  "street::BV ELIAS YOFRE 800": {
+    "barrio": "JOCKEY CLUB",
+    "observacion": null,
+    "metodo": "calle",
+    "detalle": "numero_cercano=810"
+  },
+  "segment::AV LA VOZ DEL INTERIOR 8851 EDIFICIO 2": {
+    "barrio": "AEROPUERTO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::BERNARDO O HIGGINS 6100": {
+    "barrio": "VILLA EUCARISTICA",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::HUMBERTO 1 945 PISO 7 OFICINA B": {
+    "barrio": "ALBERDI",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::BUENOS AIRES 197": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV AMADEO SABATTINI 5161": {
+    "barrio": "DEAN FUNES",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV EMILIO CARAFFA 2620": {
+    "barrio": "VILLA CABRERA",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::SANTA ROSA 320 6 B": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV LA VOZ DEL INTERIOR 8851": {
+    "barrio": "AEROPUERTO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV LA VOZ DEL INTERIOR": {
+    "barrio": "AEROPUERTO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::GRAL MANUEL SAVIO 5560": {
+    "barrio": "JOSE IGNACIO RUCCI",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV CONCEPCION ARENAL 690": {
+    "barrio": "PARQUE SARMIENTO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV CASTRO BARROS 1675": {
+    "barrio": "VILLA CABRERA",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV AMADEO SABATTINI 4260": {
+    "barrio": "Empalme",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV FUERZA AEREA ARGENTINA 4900": {
+    "barrio": "RESIDENCIAL SAN ROQUE",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV FUERZA AEREA ARGENTINA 1964": {
+    "barrio": "AVENIDA",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::PASAJE EMILIO HUESPE 187": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV FUERZA AEREA ARGENTINA 2135": {
+    "barrio": "PARQUE CAPITAL",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::PASAJE EMILIO HUESPE 130": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV FUERZA AEREA ARGENTINA 2080": {
+    "barrio": "AVENIDA",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::JULIO A ROCA 875": {
+    "barrio": "OBSERVATORIO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV J M DE PUEYRREDON 652": {
+    "barrio": "GUEMES",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::PASAJE JUAN ALBA POSSE 5854": {
+    "barrio": "GRANJA DE FUNES",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV ARMADA ARGENTINA 3555": {
+    "barrio": "PARQUE FUTURA",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV VELEZ SARSFIELD 1611": {
+    "barrio": "CIUDAD UNIVERSITARIA",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV MAIPU 44 5A X5000 CORDOBA": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV CONCEPCION ARENAL 1177": {
+    "barrio": "ROGELIO MARTINEZ",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV CONCEPCION ARENAL 54": {
+    "barrio": "PARQUE SARMIENTO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV MARCELO T DE ALVEAR 120 9 PISO": {
+    "barrio": "CENTRO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::AV LA VOZ DEL INTERIOR 7000": {
+    "barrio": "AEROPUERTO",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  },
+  "segment::LUIS DE TEJEDA 4445 ESQUINA MARTEL DE LOS RIOS X5009 CEG CORDOBA": {
+    "barrio": "CERRO DE LAS ROSAS",
+    "observacion": null,
+    "metodo": "tramo_calle",
+    "detalle": null
+  }
+}
