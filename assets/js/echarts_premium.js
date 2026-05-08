@@ -639,7 +639,7 @@ function renderChartPuntajes(data) {
 // ============================================
 
 function resizeAllCharts() {
-    ['chartEmbudo', 'chartBarrios', 'chartCategorias', 'chartResponsables', 'chartPuntajes'].forEach(id => {
+    ['chartEmbudo', 'chartProvincias', 'chartCategorias', 'chartResponsables', 'chartPuntajes'].forEach(id => {
         const dom = document.getElementById(id);
         if (dom) {
             const inst = echarts.getInstanceByDom(dom);
