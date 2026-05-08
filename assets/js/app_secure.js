@@ -576,8 +576,7 @@ function markAsDirty() {
 // ============================================
 
 function loadLocalData() {
-    filteredData = allData.filter(d => !d.inactivo);
-    renderTable();
+    applyFilters();
     updateDashboard();
     populateDashboardFilters();
     populateFilters();

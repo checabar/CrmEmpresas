@@ -124,10 +124,7 @@ function renderChartEmbudo(data) {
     };
 
     myChart.setOption(option);
-
-    window.addEventListener('resize', () => {
-        myChart.resize();
-    });
+    myChart.resize();
 
     console.log('✅ Chart Embudo renderizado');
 }
@@ -247,10 +244,7 @@ function renderChartProvincias(data) {
     };
 
     myChart.setOption(option);
-
-    window.addEventListener('resize', () => {
-        myChart.resize();
-    });
+    myChart.resize();
 
     console.log('✅ Chart Barrios renderizado');
 }
@@ -349,10 +343,7 @@ function renderChartCategorias(data) {
     };
 
     myChart.setOption(option);
-
-    window.addEventListener('resize', () => {
-        myChart.resize();
-    });
+    myChart.resize();
 
     console.log('✅ Chart Categorías renderizado (sin leyenda)');
 }
@@ -470,10 +461,7 @@ function renderChartResponsables(data) {
     };
 
     myChart.setOption(option);
-
-    window.addEventListener('resize', () => {
-        myChart.resize();
-    });
+    myChart.resize();
 
     console.log('✅ Chart Responsables renderizado');
 }
@@ -638,6 +626,16 @@ function renderChartPuntajes(data) {
 // FUNCIÓN PRINCIPAL - Llamada desde app_secure.js
 // ============================================
 
+function resizeAllCharts() {
+    ['chartEmbudo', 'chartBarrios', 'chartCategorias', 'chartResponsables', 'chartPuntajes'].forEach(id => {
+        const dom = document.getElementById(id);
+        if (dom) {
+            const inst = echarts.getInstanceByDom(dom);
+            if (inst) inst.resize();
+        }
+    });
+}
+
 function renderCharts(data) {
     try {
         renderChartEmbudo(data);
@@ -659,6 +657,9 @@ function renderCharts(data) {
         renderChartPuntajes(data);
     } catch (e) { console.error('❌ Error en Calendario:', e); }
 
+    // Resize con delay para capturar el tamaño real del contenedor tras el zoom
+    setTimeout(resizeAllCharts, 200);
+
     // Stats del embudo
     try {
         const cerrados = data.filter(d => d.etapa_pipeline === 'cerrado_ganado').length;
@@ -673,5 +674,9 @@ function renderCharts(data) {
 
 // Exponer globalmente
 window.renderCharts = renderCharts;
+window.resizeAllCharts = resizeAllCharts;
+
+// Handler único de resize para todos los gráficos
+window.addEventListener('resize', resizeAllCharts);
 
 console.log('✅ echarts_premium.js cargado correctamente');

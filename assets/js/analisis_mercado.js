@@ -599,7 +599,7 @@ async function analizarDistribuidorProfundo() {
         if (research) updateData.research = research;
 
         if (db) {
-            await db.collection('distribuidores').doc(dist.id).update(updateData);
+            await db.collection(CURRENT_COLLECTION).doc(dist.id).set(updateData, { merge: true });
         }
 
         // PASO 4: Mostrar
